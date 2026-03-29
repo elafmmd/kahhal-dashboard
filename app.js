@@ -23,8 +23,8 @@ async function loadDashboard() {
 
     debugBox.textContent = "Loading...";
 
-    const res = await fetch(`/api/dashboard?date=${date}`);
-    const result = await res.json();
+    const res = await fetch(`https://kahhal-dashboard.onrender.com/api/dashboard?date=${date}`);
+const result = await res.json();
 
     if (!res.ok || !result.ok) {
       debugBox.textContent = JSON.stringify(result, null, 2);
