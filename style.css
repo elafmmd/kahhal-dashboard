@@ -1,0 +1,319 @@
+:root {
+  --c1: #8CC7C4;
+  --c2: #547792;
+  --c3: #4E8D9C;
+  --c4: #81A6C6;
+  --c5: #D2C4B4;
+  --c6: #F3E3D0;
+
+  --bg-main: linear-gradient(135deg, rgba(243, 227, 208, 0.85), rgba(140, 199, 196, 0.65));
+  --glass: rgba(255, 255, 255, 0.28);
+  --glass-strong: rgba(255, 255, 255, 0.38);
+  --border: rgba(255, 255, 255, 0.35);
+  --shadow: 0 10px 30px rgba(84, 119, 146, 0.16);
+  --shadow-soft: 0 6px 18px rgba(78, 141, 156, 0.10);
+
+  --text-main: #2f4456;
+  --text-soft: #547792;
+  --text-muted: #6e8396;
+  --white: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(140, 199, 196, 0.30), transparent 35%),
+    radial-gradient(circle at top right, rgba(129, 166, 198, 0.25), transparent 30%),
+    linear-gradient(135deg, #f9f3ec 0%, #eef7f8 45%, #edf3fa 100%);
+  color: var(--text-main);
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 26px;
+  gap: 16px;
+}
+
+.topbar h1 {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  color: var(--text-main);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+}
+
+.topbar button {
+  padding: 10px 16px;
+  border: 1px solid rgba(255,255,255,0.35);
+  background: linear-gradient(135deg, var(--c3), var(--c2));
+  color: white;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+  backdrop-filter: blur(8px);
+}
+
+.topbar button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(84, 119, 146, 0.22);
+}
+
+.topbar button:active {
+  transform: translateY(0);
+  opacity: 0.95;
+}
+
+.filters {
+  margin-bottom: 24px;
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 300px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.filters input {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-soft);
+  color: var(--text-main);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.filters input:focus {
+  border-color: rgba(78, 141, 156, 0.45);
+  box-shadow: 0 0 0 4px rgba(140, 199, 196, 0.18);
+  background: var(--glass-strong);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.card {
+  background: var(--glass);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(84, 119, 146, 0.18);
+}
+
+.card h3 {
+  font-size: 14px;
+  margin-bottom: 14px;
+  color: var(--text-soft);
+  font-weight: 600;
+}
+
+.card p {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -1px;
+}
+
+/* إخفاء Appointments card */
+.card:first-child {
+  display: none;
+}
+
+/* إخفاء Debug Data بالكامل */
+.table-section {
+  display: none;
+}
+
+.table-section h2 {
+  font-size: 28px;
+  margin-bottom: 14px;
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+#debugBox {
+  margin-top: 6px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-main);
+  background: rgba(255,255,255,0.22);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 18px;
+  padding: 12px;
+}
+
+.doctor-counts {
+  margin: 16px 0 14px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.doctor-table-wrap {
+  background: var(--glass);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 26px;
+}
+
+.doctor-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.doctor-table thead {
+  background: linear-gradient(135deg, rgba(129, 166, 198, 0.30), rgba(140, 199, 196, 0.22));
+}
+
+.doctor-table th,
+.doctor-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid rgba(84, 119, 146, 0.10);
+  font-size: 14px;
+}
+
+.doctor-table th {
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.doctor-table td {
+  color: #314555;
+}
+
+.doctor-table tbody tr {
+  transition: background 0.18s ease;
+}
+
+.doctor-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.doctor-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.doctor-table td:nth-child(2),
+.doctor-table td:nth-child(3) {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .topbar h1 {
+    font-size: 34px;
+  }
+
+  .card p {
+    font-size: 42px;
+  }
+}
+
+@media (max-width: 600px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .topbar h1 {
+    font-size: 28px;
+  }
+
+  .card,
+  .table-section,
+  .doctor-table-wrap {
+    border-radius: 18px;
+  }
+
+  .doctor-table th,
+  .doctor-table td {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .doctor-table th {
+    font-size: 15px;
+  }
+
+  .card p {
+    font-size: 38px;
+  }
+}
+.topbar,
+.filters,
+.cards,
+.doctor-counts,
+.doctor-table-wrap {
+  position: relative;
+  z-index: 5;
+}
+
+body::before,
+body::after,
+.container::before,
+.container::after {
+  pointer-events: none;
+}
+
+body::before,
+body::after {
+  content: none !important;
+}

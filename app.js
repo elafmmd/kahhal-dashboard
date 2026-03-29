@@ -1,0 +1,81 @@
+console.log("APP RUNNING");
+
+const reportDateInput = document.getElementById("reportDate");
+const refreshBtn = document.getElementById("refreshBtn");
+const gFlorCountEl = document.getElementById("gFlorCount");
+const appointmentsCountEl = document.getElementById("appointmentsCount");
+const opCountEl = document.getElementById("opCount");
+const ipCountEl = document.getElementById("ipCount");
+const debugBox = document.getElementById("debugBox");
+
+function formatDate(date) {
+  return date.toISOString().split("T")[0];
+}
+
+function setDefaultDate() {
+  const today = new Date();
+  reportDateInput.value = formatDate(today);
+}
+
+async function loadDashboard() {
+  try {
+    const date = reportDateInput.value;
+
+    debugBox.textContent = "Loading...";
+
+    const res = await fetch(`/api/dashboard?date=${date}`);
+    const result = await res.json();
+
+    if (!res.ok || !result.ok) {
+      debugBox.textContent = JSON.stringify(result, null, 2);
+      return;
+    }
+
+    // الكروت
+    appointmentsCountEl.textContent = result.counts?.appointments ?? 0;
+    opCountEl.textContent = result.counts?.opPatients ?? 0;
+    ipCountEl.textContent = result.counts?.ipPatients ?? 0;
+gFlorCountEl.textContent = result.counts.gFlor;
+    // عدد الدكاترة
+    const doctorCountsEl = document.getElementById("doctorCounts");
+    if (doctorCountsEl) {
+      doctorCountsEl.innerHTML = `
+        Consultant: ${result.doctors?.consultant ?? 0} |
+        Specialist: ${result.doctors?.specialist ?? 0} |
+        Optometry: ${result.doctors?.optometry ?? 0}
+      `;
+    }
+
+    // الجدول
+    const tbody = document.querySelector("#doctorTable tbody");
+    tbody.innerHTML = "";
+
+    const rows = Array.isArray(result.doctorsTable) ? result.doctorsTable : [];
+
+    rows.forEach((d) => {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${d.name ?? "-"}</td>
+        <td>${d.total ?? 0}</td>
+        <td>${d.lastTime ? new Date(d.lastTime).toLocaleTimeString() : "-"}</td>
+      `;
+
+      tbody.appendChild(tr);
+    });
+
+    debugBox.textContent =
+      `Selected Date: ${result.date}\n` +
+      `OP Patients: ${result.counts?.opPatients ?? 0}\n` +
+      `IP Patients: ${result.counts?.ipPatients ?? 0}\n` +
+      `Lasik Workup: ${result.counts?.lasikWorkup ?? 0}`;
+  } catch (err) {
+    debugBox.textContent = `Error: ${err.message}`;
+  }
+}
+
+refreshBtn.addEventListener("click", loadDashboard);
+reportDateInput.addEventListener("change", loadDashboard);
+
+setDefaultDate();
+loadDashboard();

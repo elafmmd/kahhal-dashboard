@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kahhal Live Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="topbar">
+      <h1>Kahhal Live Dashboard</h1>
+      <button id="refreshBtn">Refresh</button>
+    </header>
+
+    <section class="filters">
+      <label>
+        Date
+        <input type="date" id="reportDate" />
+      </label>
+    </section>
+
+    <section class="cards">
+      <div class="card">
+        <h3>Appointments</h3>
+        <p id="appointmentsCount">0</p>
+      </div>
+
+      <div class="card">
+        <h3>OP Patients</h3>
+        <p id="opCount">0</p>
+      </div>
+
+      <div class="card">
+        <h3>IP Patients</h3>
+        <p id="ipCount">0</p>
+      </div>
+
+      <div class="card">
+  <h3>Ophthalmology</h3>
+  <p id="gFlorCount">0</p>
+</div>
+    </section>
+
+    <section class="table-section">
+      <h2>Debug Data</h2>
+      <pre id="debugBox">Waiting for data...</pre>
+    </section>
+  </div>
+
+<div id="doctorCounts" class="doctor-counts"></div>
+
+<div class="doctor-table-wrap">
+  <table id="doctorTable" class="doctor-table">
+    <thead>
+      <tr>
+        <th>Doctor</th>
+        <th>Patients Count</th>
+        <th>Last Patient</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
