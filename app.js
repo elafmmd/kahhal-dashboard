@@ -1,7 +1,6 @@
 console.log("APP RUNNING");
 
 const reportDateInput = document.getElementById("reportDate");
-const refreshBtn = document.getElementById("refreshBtn");
 const gFlorCountEl = document.getElementById("gFlorCount");
 const appointmentsCountEl = document.getElementById("appointmentsCount");
 const opCountEl = document.getElementById("opCount");
@@ -21,8 +20,7 @@ async function loadDashboard() {
   try {
     const date = reportDateInput.value;
 
-    debugBox.textContent = "Loading...";
-
+debugBox.textContent = "Updating...";
     const res = await fetch(`https://kahhal-dashboard.onrender.com/api/dashboard?date=${date}`);
 const result = await res.json();
 
@@ -74,8 +72,11 @@ gFlorCountEl.textContent = result.counts.gFlor;
   }
 }
 
-refreshBtn.addEventListener("click", loadDashboard);
 reportDateInput.addEventListener("change", loadDashboard);
 
 setDefaultDate();
 loadDashboard();
+setInterval(() => {
+  console.log("Auto refresh...");
+  loadDashboard();
+}, 30000); // كل 60 ثانية
