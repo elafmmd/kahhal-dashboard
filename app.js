@@ -12,6 +12,15 @@ const btnOP = document.getElementById("btnOP");
 const btnIP = document.getElementById("btnIP");
 btnOP.classList.add("active");
 
+function normalizeName(name) {
+  return String(name || "")
+    .toUpperCase()
+    .replace(/\./g, "")
+    .replace(/-/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 const IP_DOCTORS = [
   "MOHANNA AL JINDAN",
   "MUATH ALRUSHOOD",
@@ -28,39 +37,27 @@ const IP_DOCTORS = [
   "SANA YASSIN",
   "ADEL ALRUSHOOD",
   "ABDULAZIZ ALRUSHOOD"
-];
+].map(normalizeName);
 
-const OP_CARD_DOCTORS = [
-  "ADEL ALRUSHOOD",
-  "ABDULAZIZ ALRUSHOOD",
-  "MOHANNA AL JINDAN",
-  "MUATH ALRUSHOOD",
-  "ABDULRAHMAN ALGHADYAN",
-  "ABDALLAH ALOWAID",
-  "ELHAM AL TAMIMI",
-  "QUSAI MOHAMMED",
-  "MOFI ALWALMANY",
-  "HIND AL-DALGAN",
-  "ABDULAZIZ ALSOMALI",
-  "KHALED ALOTAIBI",
-  "UDAY AL OWAIFER",
-  "ABDULRAHMAN ALHADLAG",
-  "SANA YASSIN",
-  "AHMED EZZAT",
-  "WAQAR MUSTAFA",
-  "NAJAR MOHAMMAED",
-  "RAYAN MOHAMEED",
-  "SANA SAAED",
-  "SARA MUSTAFA",
-  "DALLAL MOHAMMAD",
-  "JESEENA JAMALUDIN",
-  "THURAYA",
-  "SUSHMITHA ARCOT",
-  "ALAAELDIN",
-  "MAHDI ABDULLA",
-  "SHERIF HASSAN",
-  "ABDULAZIZ ALQURAIN"
-];
+// لو عندك اختلافات أسماء من النظام، نغطيها هنا
+function isAllowedIpDoctor(name) {
+  const n = normalizeName(name);
+
+  if (IP_DOCTORS.includes(n)) return true;
+
+  // مرادفات/اختلافات كتابة
+  if (n.includes("GHADYAN ABDULRAHMAN")) return true;
+  if (n.includes("ABDULRAHMAN ALGHADYAN")) return true;
+
+  if (n.includes("MOFI ALWALMANY")) return true;
+  if (n.includes("MOFI ALWALMANY")) return true;
+
+  if (n.includes("ABDALLAH ALOWAID")) return true;
+  if (n.includes("ABDULAZIZ ALRUSHOOD")) return true;
+  if (n.includes("ADEL ALRUSHOOD")) return true;
+
+  return false;
+}
 
 function formatDate(date) {
   return date.toISOString().split("T")[0];
@@ -87,11 +84,8 @@ async function loadDashboard() {
     const opRows = Array.isArray(result.doctorsTable) ? result.doctorsTable : [];
     const ipRows = Array.isArray(result.ipDoctorsTable) ? result.ipDoctorsTable : [];
 
-    const opCardTotal = opRows
-      .filter(d => OP_CARD_DOCTORS.includes((d.name || "").toUpperCase().trim()))
-      .reduce((sum, d) => sum + (d.total || 0), 0);
-
-    opCountEl.textContent = opCardTotal;
+    // الكروت: نرجعها على أرقام السيرفر الأصلية
+    opCountEl.textContent = result.counts?.opPatients ?? 0;
     ipCountEl.textContent = result.counts?.ipPatients ?? 0;
     gFlorCountEl.textContent = result.counts?.gFlor ?? 0;
 
@@ -112,9 +106,7 @@ async function loadDashboard() {
     if (currentMode === "OP") {
       rows = opRows;
     } else {
-      rows = ipRows.filter(d =>
-        IP_DOCTORS.includes((d.name || "").toUpperCase().trim())
-      );
+      rows = ipRows.filter(d => isAllowedIpDoctor(d.name));
     }
 
     rows.forEach((d) => {
@@ -129,7 +121,7 @@ async function loadDashboard() {
 
     debugBox.textContent =
       `Selected Date: ${result.date}\n` +
-      `OP Patients: ${opCardTotal}\n` +
+      `OP Patients: ${result.counts?.opPatients ?? 0}\n` +
       `IP Patients: ${result.counts?.ipPatients ?? 0}\n` +
       `Lasik Workup: ${result.counts?.lasikWorkup ?? 0}`;
   } catch (err) {
