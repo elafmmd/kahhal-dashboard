@@ -26,7 +26,7 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 
 body {
@@ -198,7 +198,9 @@ body {
   border-radius: 24px;
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
   margin-bottom: 26px;
 }
 
@@ -314,4 +316,15 @@ body::after,
 body::before,
 body::after {
   content: none !important;
+}
+
+@media (max-width: 600px) {
+  .doctor-table-wrap {
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+
+  .doctor-table {
+    min-width: 100%;
+  }
 }
