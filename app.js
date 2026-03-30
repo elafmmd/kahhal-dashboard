@@ -39,18 +39,18 @@ const IP_DOCTORS = [
   "ABDULAZIZ ALRUSHOOD"
 ].map(normalizeName);
 
-const OP_CARD_DOCTORS = [
+const OP_DAMMAM_DOCTORS = [
   "ADEL ALRUSHOOD",
   "ABDULAZIZ ALRUSHOOD",
   "MOHANNA AL JINDAN",
   "MUATH ALRUSHOOD",
-  "ABDULRAHMAN ALGHADYAN",
+  "GHADYAN ABDULRAHMAN",
   "ABDALLAH ALOWAID",
   "ELHAM AL TAMIMI",
   "QUSAI MOHAMMED",
   "MOFI ALWALMANY",
-  "HIND AL-DALGAN",
-  "ABDULAZIZ ALSOMALI",
+  "HIND",
+  "SOMALI ABDULAZIZ",
   "KHALED ALOTAIBI",
   "UDAY AL OWAIFER",
   "ABDULRAHMAN ALHADLAG",
@@ -61,16 +61,12 @@ const OP_CARD_DOCTORS = [
   "RAYAN MOHAMEED",
   "SANA SAAED",
   "SARA MUSTAFA",
-  "DALLAL MOHAMMAD",
-  "JESEENA JAMALUDIN",
+  "DALLAL",
+  "JESEENA",
   "THURAYA",
-  "SUSHMITHA ARCOT",
-  "ALAAELDIN",
-  "MAHDI ABDULLA",
-  "SHERIF HASSAN",
-  "ABDULAZIZ ALQURAIN"
-];
-
+  "SUSHMITHA",
+  "SHERIF HASSAN"
+].map(normalizeName);
 function formatDate(date) {
   return date.toISOString().split("T")[0];
 }
@@ -97,14 +93,21 @@ async function loadDashboard() {
     const ipRows = Array.isArray(result.ipDoctorsTable) ? result.ipDoctorsTable : [];
 
     const opCardTotal = opRows
-      .filter(d => {
-        const n = normalizeName(d.name);
-        return OP_CARD_DOCTORS.some(doc => n.includes(normalizeName(doc)));
-      })
-      .reduce((sum, d) => sum + (d.total || 0), 0);
+  .filter(d => {
+    const n = normalizeName(d.name);
+    return OP_DAMMAM_DOCTORS.some(doc => n.includes(doc));
+  })
+  .reduce((sum, d) => sum + (d.total || 0), 0);
 
-    opCountEl.textContent = opCardTotal;
-    ipCountEl.textContent = result.counts?.ipPatients ?? 0;
+opCountEl.textContent = opCardTotal;
+    const ipFilteredTotal = ipRows
+  .filter(d => {
+    const n = normalizeName(d.name);
+    return IP_DOCTORS.some(doc => n.includes(doc));
+  })
+  .reduce((sum, d) => sum + (d.total || 0), 0);
+
+ipCountEl.textContent = ipFilteredTotal;
     gFlorCountEl.textContent = result.counts?.gFlor ?? 0;
 
     const doctorCountsEl = document.getElementById("doctorCounts");
@@ -143,7 +146,7 @@ async function loadDashboard() {
     debugBox.textContent =
       `Selected Date: ${result.date}\n` +
       `OP Patients: ${opCardTotal}\n` +
-      `IP Patients: ${result.counts?.ipPatients ?? 0}\n` +
+      `IP Patients: ${ipFilteredTotal}\n` +
       `Lasik Workup: ${result.counts?.lasikWorkup ?? 0}`;
   } catch (err) {
     debugBox.textContent = `Error: ${err.message}`;
