@@ -39,13 +39,11 @@ const IP_DOCTORS = [
   "ABDULAZIZ ALRUSHOOD"
 ].map(normalizeName);
 
-// لو عندك اختلافات أسماء من النظام، نغطيها هنا
 function isAllowedIpDoctor(name) {
   const n = normalizeName(name);
 
   if (IP_DOCTORS.includes(n)) return true;
 
-  // مرادفات/اختلافات كتابة
   if (n.includes("GHADYAN ABDULRAHMAN")) return true;
   if (n.includes("ABDULRAHMAN ALGHADYAN")) return true;
 
@@ -84,10 +82,19 @@ async function loadDashboard() {
     const opRows = Array.isArray(result.doctorsTable) ? result.doctorsTable : [];
     const ipRows = Array.isArray(result.ipDoctorsTable) ? result.ipDoctorsTable : [];
 
-    // الكروت: نرجعها على أرقام السيرفر الأصلية
-    opCountEl.textContent = result.counts?.opPatients ?? 0;
-    ipCountEl.textContent = result.counts?.ipPatients ?? 0;
-    gFlorCountEl.textContent = result.counts?.gFlor ?? 0;
+const opCardTotal = opRows
+  .filter(d => {
+    const n = normalizeName(d.name);
+    return OP_CARD_DOCTORS.some(doc => n.includes(normalizeName(doc)));
+  })
+  .reduce((sum, d) => sum + (d.total || 0), 0);
+
+opCountEl.textContent = opCardTotal;
+
+
+ipCountEl.textContent = result.counts?.ipPatients ?? 0;
+
+gFlorCountEl.textContent = result.counts?.gFlor ?? 0;
 
     const doctorCountsEl = document.getElementById("doctorCounts");
     if (doctorCountsEl) {
@@ -106,7 +113,10 @@ async function loadDashboard() {
     if (currentMode === "OP") {
       rows = opRows;
     } else {
-      rows = ipRows.filter(d => isAllowedIpDoctor(d.name));
+      rows = ipRows.filter(d => {
+  const n = normalizeName(d.name);
+  return IP_DOCTORS.some(doc => n.includes(doc));
+});
     }
 
     rows.forEach((d) => {
