@@ -35,7 +35,13 @@ const result = await res.json();
     }
 
     appointmentsCountEl.textContent = result.counts?.appointments ?? 0;
-    opCountEl.textContent = result.counts?.opPatients ?? 0;
+    const opRows = Array.isArray(result.doctorsTable) ? result.doctorsTable : [];
+
+const opCardTotal = opRows
+  .filter(d => OP_CARD_DOCTORS.includes((d.name || "").toUpperCase().trim()))
+  .reduce((sum, d) => sum + (d.total || 0), 0);
+
+opCountEl.textContent = opCardTotal;
     ipCountEl.textContent = result.counts?.ipPatients ?? 0;
 gFlorCountEl.textContent = result.counts.gFlor;
     const doctorCountsEl = document.getElementById("doctorCounts");
@@ -55,7 +61,11 @@ let rows = [];
 if (currentMode === "OP") {
   rows = Array.isArray(result.doctorsTable) ? result.doctorsTable : [];
 } else {
-  rows = Array.isArray(result.ipDoctorsTable) ? result.ipDoctorsTable : [];
+  const allRows = Array.isArray(result.doctorsTable) ? result.doctorsTable : [];
+
+  rows = allRows.filter(d =>
+    IP_DOCTORS.includes((d.name || "").toUpperCase().trim())
+  );
 }
     rows.forEach((d) => {
       const tr = document.createElement("tr");
