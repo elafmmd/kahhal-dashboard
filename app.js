@@ -2,17 +2,15 @@ console.log("APP RUNNING");
 
 const reportDateInput = document.getElementById("reportDate");
 const gFlorCountEl = document.getElementById("gFlorCount");
-const appointmentsCountEl = document.getElementById("appointmentsCount");
 const opCountEl = document.getElementById("opCount");
 const ipCountEl = document.getElementById("ipCount");
 const debugBox = document.getElementById("debugBox");
-let currentMode = "OP";
 
+let currentMode = "OP";
 
 const btnOP = document.getElementById("btnOP");
 const btnIP = document.getElementById("btnIP");
 btnOP.classList.add("active");
-
 
 const IP_DOCTORS = [
   "MOHANNA AL JINDAN",
@@ -76,26 +74,27 @@ function setDefaultDate() {
 async function loadDashboard() {
   try {
     const date = reportDateInput.value;
+    debugBox.textContent = "Updating...";
 
-debugBox.textContent = "Updating...";
     const res = await fetch(`https://kahhal-dashboard.onrender.com/api/dashboard?date=${date}`);
-const result = await res.json();
+    const result = await res.json();
 
     if (!res.ok || !result.ok) {
       debugBox.textContent = JSON.stringify(result, null, 2);
       return;
     }
 
-    appointmentsCountEl.textContent = result.counts?.appointments ?? 0;
     const opRows = Array.isArray(result.doctorsTable) ? result.doctorsTable : [];
+    const ipRows = Array.isArray(result.ipDoctorsTable) ? result.ipDoctorsTable : [];
 
-const opCardTotal = opRows
-  .filter(d => OP_CARD_DOCTORS.includes((d.name || "").toUpperCase().trim()))
-  .reduce((sum, d) => sum + (d.total || 0), 0);
+    const opCardTotal = opRows
+      .filter(d => OP_CARD_DOCTORS.includes((d.name || "").toUpperCase().trim()))
+      .reduce((sum, d) => sum + (d.total || 0), 0);
 
-opCountEl.textContent = opCardTotal;
+    opCountEl.textContent = opCardTotal;
     ipCountEl.textContent = result.counts?.ipPatients ?? 0;
-gFlorCountEl.textContent = result.counts.gFlor;
+    gFlorCountEl.textContent = result.counts?.gFlor ?? 0;
+
     const doctorCountsEl = document.getElementById("doctorCounts");
     if (doctorCountsEl) {
       doctorCountsEl.innerHTML = `
@@ -108,32 +107,29 @@ gFlorCountEl.textContent = result.counts.gFlor;
     const tbody = document.querySelector("#doctorTable tbody");
     tbody.innerHTML = "";
 
-let rows = [];
+    let rows = [];
 
-if (currentMode === "OP") {
-  rows = Array.isArray(result.doctorsTable) ? result.doctorsTable : [];
-} else {
-  const allRows = Array.isArray(result.doctorsTable) ? result.doctorsTable : [];
+    if (currentMode === "OP") {
+      rows = opRows;
+    } else {
+      rows = ipRows.filter(d =>
+        IP_DOCTORS.includes((d.name || "").toUpperCase().trim())
+      );
+    }
 
-  rows = allRows.filter(d =>
-    IP_DOCTORS.includes((d.name || "").toUpperCase().trim())
-  );
-}
     rows.forEach((d) => {
       const tr = document.createElement("tr");
-
       tr.innerHTML = `
         <td>${d.name ?? "-"}</td>
         <td>${d.total ?? 0}</td>
         <td>${d.lastTime ? new Date(d.lastTime).toLocaleTimeString() : "-"}</td>
       `;
-
       tbody.appendChild(tr);
     });
 
     debugBox.textContent =
       `Selected Date: ${result.date}\n` +
-      `OP Patients: ${result.counts?.opPatients ?? 0}\n` +
+      `OP Patients: ${opCardTotal}\n` +
       `IP Patients: ${result.counts?.ipPatients ?? 0}\n` +
       `Lasik Workup: ${result.counts?.lasikWorkup ?? 0}`;
   } catch (err) {
@@ -155,12 +151,12 @@ btnIP.addEventListener("click", () => {
   loadDashboard();
 });
 
-
 reportDateInput.addEventListener("change", loadDashboard);
 
 setDefaultDate();
 loadDashboard();
+
 setInterval(() => {
   console.log("Auto refresh...");
   loadDashboard();
-}, 30000); 
+}, 30000);
