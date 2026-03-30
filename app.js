@@ -15,9 +15,11 @@ btnOP.classList.add("active");
 function normalizeName(name) {
   return String(name || "")
     .toUpperCase()
-    .replace(/\./g, "")
-    .replace(/-/g, " ")
-    .replace(/\s+/g, " ")
+    .replace("DR.", "")              
+    .replace(/[0-9]/g, "")           
+    .replace(/-/g, " ")              
+    .replace(/\./g, "")              
+    .replace(/\s+/g, " ")            
     .trim();
 }
 
@@ -39,9 +41,9 @@ const IP_DOCTORS = [
   "ABDULAZIZ ALRUSHOOD"
 ].map(normalizeName);
 
-const OP_DAMMAM_DOCTORS = [
-  "ADEL ALRUSHOOD",
-  "ABDULAZIZ ALRUSHOOD",
+const DAMMAM_DOCTORS = [
+  "ADEL RUSHOOD",
+  "ABDULAZIZ RUSHOOD",
   "MOHANNA AL JINDAN",
   "MUATH ALRUSHOOD",
   "GHADYAN ABDULRAHMAN",
@@ -49,7 +51,7 @@ const OP_DAMMAM_DOCTORS = [
   "ELHAM AL TAMIMI",
   "QUSAI MOHAMMED",
   "MOFI ALWALMANY",
-  "HIND",
+  "HIND AL DALGAN",
   "SOMALI ABDULAZIZ",
   "KHALED ALOTAIBI",
   "UDAY AL OWAIFER",
@@ -61,11 +63,14 @@ const OP_DAMMAM_DOCTORS = [
   "RAYAN MOHAMEED",
   "SANA SAAED",
   "SARA MUSTAFA",
-  "DALLAL",
-  "JESEENA",
+  "DALLAL MOHAMMAD AL MADANI",
+  "JESEENA JAMALUDIN",
   "THURAYA",
-  "SUSHMITHA",
-  "SHERIF HASSAN"
+  "SUSHMITHA ARCOT",
+  "ALAAELDIN ABDULMONEIM",
+  "MAHDI ABDULLA AL JUNAIDI",
+  "SHERIF HASSAN",
+  "QURAIN ABDULAZIZ"
 ].map(normalizeName);
 function formatDate(date) {
   return date.toISOString().split("T")[0];
@@ -92,14 +97,14 @@ async function loadDashboard() {
     const opRows = Array.isArray(result.doctorsTable) ? result.doctorsTable : [];
     const ipRows = Array.isArray(result.ipDoctorsTable) ? result.ipDoctorsTable : [];
 
-    const opCardTotal = opRows
+    const opFilteredTotal = opRows
   .filter(d => {
     const n = normalizeName(d.name);
-    return OP_DAMMAM_DOCTORS.some(doc => n.includes(doc));
+    return DAMMAM_DOCTORS.some(doc => n.includes(doc));
   })
   .reduce((sum, d) => sum + (d.total || 0), 0);
 
-opCountEl.textContent = opCardTotal;
+opCountEl.textContent = opFilteredTotal;
     const ipFilteredTotal = ipRows
   .filter(d => {
     const n = normalizeName(d.name);
