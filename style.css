@@ -156,12 +156,10 @@ body {
   letter-spacing: -1px;
 }
 
-/* إخفاء Appointments card */
 .card:first-child {
   display: none;
 }
 
-/* إخفاء Debug Data بالكامل */
 .table-section {
   display: none;
 }
