@@ -97,8 +97,8 @@ async function loadDashboard() {
     const opRows = Array.isArray(result.doctorsTable) ? result.doctorsTable : [];
     const ipRows = Array.isArray(result.ipDoctorsTable) ? result.ipDoctorsTable : [];
 
-    opCountEl.textContent = result.counts?.dammamOpPatients ?? 0;
-    ipCountEl.textContent = result.counts?.dammamIpPatients ?? 0;
+    opCountEl.textContent = result.counts?.dammamOpRecords ?? 0;
+ipCountEl.textContent = result.counts?.dammamIpRecords ?? 0;
     gFlorCountEl.textContent = result.counts?.gFlor ?? 0;
 
     const doctorCountsEl = document.getElementById("doctorCounts");

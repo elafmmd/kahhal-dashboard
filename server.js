@@ -279,7 +279,9 @@ app.get("/api/dashboard", async (req, res) => {
         .map(v => String(v.MR_NO || v.mr_no || "").trim())
         .filter(Boolean)
     ).size;
-
+const dammamOpRecords = opVisits.filter(v =>
+  isDoctorInList(v.DOCTOR_NAME || v.DOCTOR_FULL_NAME || "", DAMMAM_DOCTORS)
+).length;
     const dammamIpPatients = new Set(
       ipVisits
         .filter(v =>
@@ -427,14 +429,16 @@ app.get("/api/dashboard", async (req, res) => {
       ok: true,
       date,
       counts: {
-        appointments: 0,
-        opPatients,
-        ipPatients,
-        dammamOpPatients,
-        dammamIpPatients,
-        lasikWorkup: lasikWorkupCount,
-        gFlor: gFlorCount
-      },
+  appointments: 0,
+  opPatients,
+  ipPatients,
+  dammamOpPatients,
+  dammamIpPatients,
+  dammamOpRecords,
+  dammamIpRecords,
+  lasikWorkup: lasikWorkupCount,
+  gFlor: gFlorCount
+},
       doctors: {
         consultant: countByList(activeDoctors, CONSULTANTS),
         specialist: countByList(activeDoctors, SPECIALISTS),
