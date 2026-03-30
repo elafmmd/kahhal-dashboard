@@ -79,4 +79,4 @@ loadDashboard();
 setInterval(() => {
   console.log("Auto refresh...");
   loadDashboard();
-}, 30000); // كل 60 ثانية
+}, 30000); 

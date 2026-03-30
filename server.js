@@ -6,11 +6,12 @@ const app = express();
 app.use(cors());
 app.use(express.static(__dirname));
 
-const BASE_URL = "https://api.instahealthsolutions.com/kahhal/Customer";
-const HOSPITAL_NAME = "kahhal";
-const LOGIN_HEADER_AUTH = "auto_update:auto_update";
-const CENTER_ID = 1;
-const ORG_ID = "ORG0001";
+const BASE_URL = process.env.BASE_URL;
+
+const HOSPITAL_NAME = process.env.HOSPITAL_NAME;
+const LOGIN_HEADER_AUTH = process.env.LOGIN_HEADER_AUTH;
+const CENTER_ID = process.env.CENTER_ID;
+const ORG_ID = process.env.ORG_ID;
 
 const CONSULTANTS = [
   
