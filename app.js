@@ -39,23 +39,37 @@ const IP_DOCTORS = [
   "ABDULAZIZ ALRUSHOOD"
 ].map(normalizeName);
 
-function isAllowedIpDoctor(name) {
-  const n = normalizeName(name);
-
-  if (IP_DOCTORS.includes(n)) return true;
-
-  if (n.includes("GHADYAN ABDULRAHMAN")) return true;
-  if (n.includes("ABDULRAHMAN ALGHADYAN")) return true;
-
-  if (n.includes("MOFI ALWALMANY")) return true;
-  if (n.includes("MOFI ALWALMANY")) return true;
-
-  if (n.includes("ABDALLAH ALOWAID")) return true;
-  if (n.includes("ABDULAZIZ ALRUSHOOD")) return true;
-  if (n.includes("ADEL ALRUSHOOD")) return true;
-
-  return false;
-}
+const OP_CARD_DOCTORS = [
+  "ADEL ALRUSHOOD",
+  "ABDULAZIZ ALRUSHOOD",
+  "MOHANNA AL JINDAN",
+  "MUATH ALRUSHOOD",
+  "ABDULRAHMAN ALGHADYAN",
+  "ABDALLAH ALOWAID",
+  "ELHAM AL TAMIMI",
+  "QUSAI MOHAMMED",
+  "MOFI ALWALMANY",
+  "HIND AL-DALGAN",
+  "ABDULAZIZ ALSOMALI",
+  "KHALED ALOTAIBI",
+  "UDAY AL OWAIFER",
+  "ABDULRAHMAN ALHADLAG",
+  "SANA YASSIN",
+  "AHMED EZZAT",
+  "WAQAR MUSTAFA",
+  "NAJAR MOHAMMAED",
+  "RAYAN MOHAMEED",
+  "SANA SAAED",
+  "SARA MUSTAFA",
+  "DALLAL MOHAMMAD",
+  "JESEENA JAMALUDIN",
+  "THURAYA",
+  "SUSHMITHA ARCOT",
+  "ALAAELDIN",
+  "MAHDI ABDULLA",
+  "SHERIF HASSAN",
+  "ABDULAZIZ ALQURAIN"
+];
 
 function formatDate(date) {
   return date.toISOString().split("T")[0];
@@ -82,19 +96,16 @@ async function loadDashboard() {
     const opRows = Array.isArray(result.doctorsTable) ? result.doctorsTable : [];
     const ipRows = Array.isArray(result.ipDoctorsTable) ? result.ipDoctorsTable : [];
 
-const opCardTotal = opRows
-  .filter(d => {
-    const n = normalizeName(d.name);
-    return OP_CARD_DOCTORS.some(doc => n.includes(normalizeName(doc)));
-  })
-  .reduce((sum, d) => sum + (d.total || 0), 0);
+    const opCardTotal = opRows
+      .filter(d => {
+        const n = normalizeName(d.name);
+        return OP_CARD_DOCTORS.some(doc => n.includes(normalizeName(doc)));
+      })
+      .reduce((sum, d) => sum + (d.total || 0), 0);
 
-opCountEl.textContent = opCardTotal;
-
-
-ipCountEl.textContent = result.counts?.ipPatients ?? 0;
-
-gFlorCountEl.textContent = result.counts?.gFlor ?? 0;
+    opCountEl.textContent = opCardTotal;
+    ipCountEl.textContent = result.counts?.ipPatients ?? 0;
+    gFlorCountEl.textContent = result.counts?.gFlor ?? 0;
 
     const doctorCountsEl = document.getElementById("doctorCounts");
     if (doctorCountsEl) {
@@ -114,9 +125,9 @@ gFlorCountEl.textContent = result.counts?.gFlor ?? 0;
       rows = opRows;
     } else {
       rows = ipRows.filter(d => {
-  const n = normalizeName(d.name);
-  return IP_DOCTORS.some(doc => n.includes(doc));
-});
+        const n = normalizeName(d.name);
+        return IP_DOCTORS.some(doc => n.includes(doc));
+      });
     }
 
     rows.forEach((d) => {
@@ -131,11 +142,12 @@ gFlorCountEl.textContent = result.counts?.gFlor ?? 0;
 
     debugBox.textContent =
       `Selected Date: ${result.date}\n` +
-      `OP Patients: ${result.counts?.opPatients ?? 0}\n` +
+      `OP Patients: ${opCardTotal}\n` +
       `IP Patients: ${result.counts?.ipPatients ?? 0}\n` +
       `Lasik Workup: ${result.counts?.lasikWorkup ?? 0}`;
   } catch (err) {
     debugBox.textContent = `Error: ${err.message}`;
+    console.error(err);
   }
 }
 
