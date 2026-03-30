@@ -7,8 +7,11 @@ const opCountEl = document.getElementById("opCount");
 const ipCountEl = document.getElementById("ipCount");
 const debugBox = document.getElementById("debugBox");
 let currentMode = "OP";
+
+
 const btnOP = document.getElementById("btnOP");
 const btnIP = document.getElementById("btnIP");
+btnOP.classList.add("active");
 function formatDate(date) {
   return date.toISOString().split("T")[0];
 }
