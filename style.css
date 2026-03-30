@@ -156,9 +156,7 @@ body {
   letter-spacing: -1px;
 }
 
-.card:first-child {
-  display: none;
-}
+
 
 .table-section {
   display: none;
