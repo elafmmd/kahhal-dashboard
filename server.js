@@ -282,6 +282,12 @@ app.get("/api/dashboard", async (req, res) => {
 const dammamOpRecords = opVisits.filter(v =>
   isDoctorInList(v.DOCTOR_NAME || v.DOCTOR_FULL_NAME || "", DAMMAM_DOCTORS)
 ).length;
+const dammamIpRecords = ipVisits.filter(v =>
+  isDoctorInList(
+    v.DOCTOR_NAME || v.DOCTOR_FULL_NAME || v.SURGEON_NAME || v.TREATING_DOCTOR || "",
+    DAMMAM_IP_DOCTORS
+  )
+).length;
     const dammamIpPatients = new Set(
       ipVisits
         .filter(v =>
