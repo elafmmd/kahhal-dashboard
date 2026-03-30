@@ -29,12 +29,10 @@ const result = await res.json();
       return;
     }
 
-    // الكروت
     appointmentsCountEl.textContent = result.counts?.appointments ?? 0;
     opCountEl.textContent = result.counts?.opPatients ?? 0;
     ipCountEl.textContent = result.counts?.ipPatients ?? 0;
 gFlorCountEl.textContent = result.counts.gFlor;
-    // عدد الدكاترة
     const doctorCountsEl = document.getElementById("doctorCounts");
     if (doctorCountsEl) {
       doctorCountsEl.innerHTML = `
@@ -44,7 +42,6 @@ gFlorCountEl.textContent = result.counts.gFlor;
       `;
     }
 
-    // الجدول
     const tbody = document.querySelector("#doctorTable tbody");
     tbody.innerHTML = "";
 
