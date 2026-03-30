@@ -97,22 +97,8 @@ async function loadDashboard() {
     const opRows = Array.isArray(result.doctorsTable) ? result.doctorsTable : [];
     const ipRows = Array.isArray(result.ipDoctorsTable) ? result.ipDoctorsTable : [];
 
-    const opFilteredTotal = opRows
-  .filter(d => {
-    const n = normalizeName(d.name);
-    return DAMMAM_DOCTORS.some(doc => n.includes(doc));
-  })
-  .reduce((sum, d) => sum + (d.total || 0), 0);
-
-opCountEl.textContent = opFilteredTotal;
-    const ipFilteredTotal = ipRows
-  .filter(d => {
-    const n = normalizeName(d.name);
-    return IP_DOCTORS.some(doc => n.includes(doc));
-  })
-  .reduce((sum, d) => sum + (d.total || 0), 0);
-
-ipCountEl.textContent = ipFilteredTotal;
+    opCountEl.textContent = result.counts?.dammamOpPatients ?? 0;
+    ipCountEl.textContent = result.counts?.dammamIpPatients ?? 0;
     gFlorCountEl.textContent = result.counts?.gFlor ?? 0;
 
     const doctorCountsEl = document.getElementById("doctorCounts");
@@ -149,10 +135,10 @@ ipCountEl.textContent = ipFilteredTotal;
     });
 
     debugBox.textContent =
-      `Selected Date: ${result.date}\n` +
-      `OP Patients: ${opCardTotal}\n` +
-      `IP Patients: ${ipFilteredTotal}\n` +
-      `Lasik Workup: ${result.counts?.lasikWorkup ?? 0}`;
+  `Selected Date: ${result.date}\n` +
+  `OP Patients: ${result.counts?.dammamOpPatients ?? 0}\n` +
+  `IP Patients: ${result.counts?.dammamIpPatients ?? 0}\n` +
+  `Lasik Workup: ${result.counts?.lasikWorkup ?? 0}`;
   } catch (err) {
     debugBox.textContent = `Error: ${err.message}`;
     console.error(err);

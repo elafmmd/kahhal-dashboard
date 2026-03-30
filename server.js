@@ -14,7 +14,6 @@ const CENTER_ID = process.env.CENTER_ID;
 const ORG_ID = process.env.ORG_ID;
 
 const CONSULTANTS = [
-  
   "MOHANNA AL JINDAN",
   "MUATH ALRUSHOOD",
   "GHADYAN ABDULRAHMAN",
@@ -29,6 +28,7 @@ const CONSULTANTS = [
   "ABDULRAHMAN ALHADLAG",
   "SANA YASSIN"
 ];
+
 const IP_DOCTORS = [
   "MOHANNA AL JINDAN",
   "MUATH ALRUSHOOD",
@@ -46,6 +46,7 @@ const IP_DOCTORS = [
   "ADEL ALRUSHOOD",
   "ABDULAZIZ ALRUSHOOD"
 ];
+
 const OP_CARD_DOCTORS = [
   "ADEL ALRUSHOOD",
   "ABDULAZIZ ALRUSHOOD",
@@ -83,19 +84,17 @@ const CONSULTANT_SCHEDULE = {
   "MOHANNA AL JINDAN": [1, 4, 6],
   "GHADYAN ABDULRAHMAN": [0, 3],
   "ABDALLAH ALOWAID": [1, 4, 6],
-"ELHAM AL TAMIMI": [2, 3, 6],
-"QUSAI MOHAMMED": [ 0, 2, 3, 4, 5, 6],
-"MOFI ALWALMANY": [3],
-"HIND": [2],
-"SOMALI ABDULAZIZ": [1, 4],
-"KHALED ALOTAIBI": [0, 2],
-"UDAY AL OWAIFER": [0],
-"ABDULRAHMAN ALHADLAG": [4],
-"SANA YASSIN": [1, 3],
-
-
-
+  "ELHAM AL TAMIMI": [2, 3, 6],
+  "QUSAI MOHAMMED": [0, 2, 3, 4, 5, 6],
+  "MOFI ALWALMANY": [3],
+  "HIND": [2],
+  "SOMALI ABDULAZIZ": [1, 4],
+  "KHALED ALOTAIBI": [0, 2],
+  "UDAY AL OWAIFER": [0],
+  "ABDULRAHMAN ALHADLAG": [4],
+  "SANA YASSIN": [1, 3]
 };
+
 const SPECIALISTS = [
   "AHMED EZZAT",
   "WAQAR MUSTAFA",
@@ -111,22 +110,91 @@ const OPTOMETRY = [
   "THURAYA",
   "SUSHMITHA"
 ];
+
 const ALL_DOCTORS = [
   ...CONSULTANTS,
   ...SPECIALISTS,
   ...OPTOMETRY
 ];
+
 const TABLE_ONLY_DOCTORS = [
   "SHERIF HASSAN"
 ];
+
+function normalizeDoctorName(name) {
+  return String(name || "")
+    .toUpperCase()
+    .replace("DR.", "")
+    .replace(/[0-9]/g, "")
+    .replace(/-/g, " ")
+    .replace(/\./g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const DAMMAM_DOCTORS = [
+  "ADEL RUSHOOD",
+  "ABDULAZIZ RUSHOOD",
+  "MOHANNA AL JINDAN",
+  "MUATH ALRUSHOOD",
+  "GHADYAN ABDULRAHMAN",
+  "ABDALLAH ALOWAID",
+  "ELHAM AL TAMIMI",
+  "QUSAI MOHAMMED",
+  "MOFI ALWALMANY",
+  "HIND AL DALGAN",
+  "SOMALI ABDULAZIZ",
+  "KHALED ALOTAIBI",
+  "UDAY AL OWAIFER",
+  "ABDULRAHMAN ALHADLAG",
+  "SANA YASSIN",
+  "AHMED EZZAT",
+  "WAQAR MUSTAFA",
+  "NAJAR MOHAMMAED",
+  "RAYAN MOHAMEED",
+  "SANA SAAED",
+  "SARA MUSTAFA",
+  "DALLAL MOHAMMAD AL MADANI",
+  "JESEENA JAMALUDIN",
+  "THURAYA",
+  "SUSHMITHA ARCOT",
+  "ALAAELDIN ABDULMONEIM",
+  "MAHDI ABDULLA AL JUNAIDI",
+  "SHERIF HASSAN",
+  "QURAIN ABDULAZIZ"
+].map(normalizeDoctorName);
+
+const DAMMAM_IP_DOCTORS = [
+  "ADEL RUSHOOD",
+  "ABDULAZIZ RUSHOOD",
+  "MOHANNA AL JINDAN",
+  "MUATH ALRUSHOOD",
+  "GHADYAN ABDULRAHMAN",
+  "ABDALLAH ALOWAID",
+  "ELHAM AL TAMIMI",
+  "QUSAI MOHAMMED",
+  "MOFI ALWALMANY",
+  "HIND AL DALGAN",
+  "SOMALI ABDULAZIZ",
+  "KHALED ALOTAIBI",
+  "UDAY AL OWAIFER",
+  "ABDULRAHMAN ALHADLAG",
+  "SANA YASSIN"
+].map(normalizeDoctorName);
+
 function cleanName(name) {
   return (name || "")
     .toUpperCase()
     .replace("DR.", "")
     .replace(/[0-9]/g, "")
-    .replace(/^[A-Z]\s+/g, "") // 👈 يشيل حرف واحد بالبداية مثل M
+    .replace(/^[A-Z]\s+/g, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function isDoctorInList(rawName, doctorList) {
+  const n = normalizeDoctorName(rawName);
+  return doctorList.some(doc => n.includes(doc) || doc.includes(n));
 }
 
 function countByList(activeDoctors, list) {
@@ -165,13 +233,12 @@ app.get("/api/dashboard", async (req, res) => {
       `&org_id=${ORG_ID}`;
 
     const billsUrl =
-  `${BASE_URL}/Bills.do?_method=getBills` +
-  `&from_date=${encodeURIComponent(date)}` +
-  `&to_date=${encodeURIComponent(date)}` +
-  `&center_id=${CENTER_ID}` +
-  `&filter_by_finalized_date=N`+
-  `&page=1`;
-  
+      `${BASE_URL}/Bills.do?_method=getBills` +
+      `&from_date=${encodeURIComponent(date)}` +
+      `&to_date=${encodeURIComponent(date)}` +
+      `&center_id=${CENTER_ID}` +
+      `&filter_by_finalized_date=N` +
+      `&page=1`;
 
     const [visitsRes, billsRes] = await Promise.all([
       axios.get(visitsUrl, {
@@ -206,155 +273,176 @@ app.get("/api/dashboard", async (req, res) => {
       ipVisits.map(v => String(v.MR_NO || v.mr_no || "").trim()).filter(Boolean)
     ).size;
 
-   const lasikPatients = new Set();
+    const dammamOpPatients = new Set(
+      opVisits
+        .filter(v => isDoctorInList(v.DOCTOR_NAME || v.DOCTOR_FULL_NAME || "", DAMMAM_DOCTORS))
+        .map(v => String(v.MR_NO || v.mr_no || "").trim())
+        .filter(Boolean)
+    ).size;
 
-bills.forEach((bill) => {
-  const charges = Array.isArray(bill.charges) ? bill.charges : [];
+    const dammamIpPatients = new Set(
+      ipVisits
+        .filter(v =>
+          isDoctorInList(
+            v.DOCTOR_NAME || v.DOCTOR_FULL_NAME || v.SURGEON_NAME || v.TREATING_DOCTOR || "",
+            DAMMAM_IP_DOCTORS
+          )
+        )
+        .map(v => String(v.MR_NO || v.mr_no || "").trim())
+        .filter(Boolean)
+    ).size;
 
-  charges.forEach((c) => {
-    const desc = String(c.description || "")
-      .toUpperCase()
-      .replace(/\s+/g, " ")
-      .trim();
+    const lasikPatients = new Set();
 
-    if (
-      desc.includes("REFRECTIVE SURGERY WORKUP") ||
-      desc.includes("REFRACTIVE SURGERY WORKUP")
-    ) {
-      const mr = String(bill.mr_no || "").trim();
-      if (mr) {
-        lasikPatients.add(mr);
-      }
-    }
-  });
-});
+    bills.forEach((bill) => {
+      const charges = Array.isArray(bill.charges) ? bill.charges : [];
 
-const lasikWorkupCount = lasikPatients.size;
-console.log("TOTAL BILLS:", bills.length);
+      charges.forEach((c) => {
+        const desc = String(c.description || "")
+          .toUpperCase()
+          .replace(/\s+/g, " ")
+          .trim();
 
-bills.forEach((bill, i) => {
-  const charges = Array.isArray(bill.charges) ? bill.charges : [];
-  charges.forEach((c) => {
-    const desc = String(c.description || "").toUpperCase().trim();
-    if (desc.includes("WORKUP")) {
-      console.log("WORKUP FOUND", i + 1, {
-        bill_no: bill.bill_no,
-        mr_no: bill.mr_no,
-        visit_id: bill.visit_id,
-        description: c.description
+        if (
+          desc.includes("REFRECTIVE SURGERY WORKUP") ||
+          desc.includes("REFRACTIVE SURGERY WORKUP")
+        ) {
+          const mr = String(bill.mr_no || "").trim();
+          if (mr) {
+            lasikPatients.add(mr);
+          }
+        }
       });
-    }
-  });
-});
+    });
+
+    const lasikWorkupCount = lasikPatients.size;
+    console.log("TOTAL BILLS:", bills.length);
+
+    bills.forEach((bill, i) => {
+      const charges = Array.isArray(bill.charges) ? bill.charges : [];
+      charges.forEach((c) => {
+        const desc = String(c.description || "").toUpperCase().trim();
+        if (desc.includes("WORKUP")) {
+          console.log("WORKUP FOUND", i + 1, {
+            bill_no: bill.bill_no,
+            mr_no: bill.mr_no,
+            visit_id: bill.visit_id,
+            description: c.description
+          });
+        }
+      });
+    });
+
     const doctorStats = {};
-const ipDoctorStats = {};
+    const ipDoctorStats = {};
 
-// ===== OP =====
-opVisits.forEach((v) => {
-  const rawName = v.DOCTOR_NAME || v.DOCTOR_FULL_NAME || "";
-  const name = cleanName(rawName);
-  if (!name) return;
+    opVisits.forEach((v) => {
+      const rawName = v.DOCTOR_NAME || v.DOCTOR_FULL_NAME || "";
+      const name = cleanName(rawName);
+      if (!name) return;
 
-  const visitTimeRaw = v.REG_DATE_TIME || null;
-  const visitTime = visitTimeRaw ? new Date(visitTimeRaw) : null;
+      const visitTimeRaw = v.REG_DATE_TIME || null;
+      const visitTime = visitTimeRaw ? new Date(visitTimeRaw) : null;
 
-  const schedule = CONSULTANT_SCHEDULE[name];
-  if (schedule && visitTime) {
-    const day = visitTime.getDay();
-    if (!schedule.includes(day)) return;
-  }
+      const schedule = CONSULTANT_SCHEDULE[name];
+      if (schedule && visitTime) {
+        const day = visitTime.getDay();
+        if (!schedule.includes(day)) return;
+      }
 
-  if (!doctorStats[name]) {
-    doctorStats[name] = {
-      name,
-      appointment: 0,
-      walkin: 0,
-      lastTime: null
-    };
-  }
+      if (!doctorStats[name]) {
+        doctorStats[name] = {
+          name,
+          appointment: 0,
+          walkin: 0,
+          lastTime: null
+        };
+      }
 
-  if (v.APPOINTMENT_ID || v.APPOINTMENT_NO) {
-    doctorStats[name].appointment += 1;
-  } else {
-    doctorStats[name].walkin += 1;
-  }
+      if (v.APPOINTMENT_ID || v.APPOINTMENT_NO) {
+        doctorStats[name].appointment += 1;
+      } else {
+        doctorStats[name].walkin += 1;
+      }
 
-  if (visitTime) {
-    if (!doctorStats[name].lastTime || visitTime > doctorStats[name].lastTime) {
-      doctorStats[name].lastTime = visitTime;
-    }
-  }
-});
+      if (visitTime) {
+        if (!doctorStats[name].lastTime || visitTime > doctorStats[name].lastTime) {
+          doctorStats[name].lastTime = visitTime;
+        }
+      }
+    });
 
-// ===== IP =====
-ipVisits.forEach((v) => {
-  const rawName =
-    v.DOCTOR_NAME ||
-    v.DOCTOR_FULL_NAME ||
-    v.SURGEON_NAME ||
-    v.TREATING_DOCTOR ||
-    "";
-  const name = cleanName(rawName);
-  if (!name) return;
+    ipVisits.forEach((v) => {
+      const rawName =
+        v.DOCTOR_NAME ||
+        v.DOCTOR_FULL_NAME ||
+        v.SURGEON_NAME ||
+        v.TREATING_DOCTOR ||
+        "";
+      const name = cleanName(rawName);
+      if (!name) return;
 
-  const visitTimeRaw = v.REG_DATE_TIME || null;
-  const visitTime = visitTimeRaw ? new Date(visitTimeRaw) : null;
+      const visitTimeRaw = v.REG_DATE_TIME || null;
+      const visitTime = visitTimeRaw ? new Date(visitTimeRaw) : null;
 
-  if (!ipDoctorStats[name]) {
-    ipDoctorStats[name] = {
-      name,
-      total: 0,
-      lastTime: null
-    };
-  }
+      if (!ipDoctorStats[name]) {
+        ipDoctorStats[name] = {
+          name,
+          total: 0,
+          lastTime: null
+        };
+      }
 
-  ipDoctorStats[name].total += 1;
+      ipDoctorStats[name].total += 1;
 
-  if (visitTime) {
-    if (!ipDoctorStats[name].lastTime || visitTime > ipDoctorStats[name].lastTime) {
-      ipDoctorStats[name].lastTime = visitTime;
-    }
-  }
-});
+      if (visitTime) {
+        if (!ipDoctorStats[name].lastTime || visitTime > ipDoctorStats[name].lastTime) {
+          ipDoctorStats[name].lastTime = visitTime;
+        }
+      }
+    });
 
-const activeDoctors = Object.keys(doctorStats);
+    const activeDoctors = Object.keys(doctorStats);
 
-const doctorsTable = Object.values(doctorStats)
-  .filter(d =>
-    ALL_DOCTORS.some(name => d.name.includes(name)) ||
-    TABLE_ONLY_DOCTORS.some(name => d.name.includes(name))
-  )
-  .map(d => ({
-    name: d.name,
-    total: d.appointment + d.walkin,
-    lastTime: d.lastTime
-  }))
-  .sort((a, b) => b.total - a.total);
+    const doctorsTable = Object.values(doctorStats)
+      .filter(d =>
+        ALL_DOCTORS.some(name => d.name.includes(name)) ||
+        TABLE_ONLY_DOCTORS.some(name => d.name.includes(name))
+      )
+      .map(d => ({
+        name: d.name,
+        total: d.appointment + d.walkin,
+        lastTime: d.lastTime
+      }))
+      .sort((a, b) => b.total - a.total);
 
-const ipDoctorsTable = Object.values(ipDoctorStats)
-  .sort((a, b) => b.total - a.total);
-const gFlorCount = doctorsTable
-  .filter(d => !d.name.includes("SHERIF HASSAN"))
-  .reduce((sum, d) => sum + d.total, 0);
+    const ipDoctorsTable = Object.values(ipDoctorStats)
+      .sort((a, b) => b.total - a.total);
 
-res.json({
-  ok: true,
-  date,
-  counts: {
-    appointments: 0,
-    opPatients,
-    ipPatients,
-    lasikWorkup: lasikWorkupCount,
-    gFlor: gFlorCount
-  },
-  doctors: {
-    consultant: countByList(activeDoctors, CONSULTANTS),
-    specialist: countByList(activeDoctors, SPECIALISTS),
-    optometry: countByList(activeDoctors, OPTOMETRY)
-  },
-  doctorsTable,
-ipDoctorsTable
-});
+    const gFlorCount = doctorsTable
+      .filter(d => !d.name.includes("SHERIF HASSAN"))
+      .reduce((sum, d) => sum + d.total, 0);
+
+    res.json({
+      ok: true,
+      date,
+      counts: {
+        appointments: 0,
+        opPatients,
+        ipPatients,
+        dammamOpPatients,
+        dammamIpPatients,
+        lasikWorkup: lasikWorkupCount,
+        gFlor: gFlorCount
+      },
+      doctors: {
+        consultant: countByList(activeDoctors, CONSULTANTS),
+        specialist: countByList(activeDoctors, SPECIALISTS),
+        optometry: countByList(activeDoctors, OPTOMETRY)
+      },
+      doctorsTable,
+      ipDoctorsTable
+    });
   } catch (err) {
     res.status(500).json({
       ok: false,
