@@ -6,7 +6,9 @@ const appointmentsCountEl = document.getElementById("appointmentsCount");
 const opCountEl = document.getElementById("opCount");
 const ipCountEl = document.getElementById("ipCount");
 const debugBox = document.getElementById("debugBox");
-
+let currentMode = "OP";
+const btnOP = document.getElementById("btnOP");
+const btnIP = document.getElementById("btnIP");
 function formatDate(date) {
   return date.toISOString().split("T")[0];
 }
@@ -45,8 +47,13 @@ gFlorCountEl.textContent = result.counts.gFlor;
     const tbody = document.querySelector("#doctorTable tbody");
     tbody.innerHTML = "";
 
-    const rows = Array.isArray(result.doctorsTable) ? result.doctorsTable : [];
+let rows = [];
 
+if (currentMode === "OP") {
+  rows = Array.isArray(result.doctorsTable) ? result.doctorsTable : [];
+} else {
+  rows = Array.isArray(result.ipDoctorsTable) ? result.ipDoctorsTable : [];
+}
     rows.forEach((d) => {
       const tr = document.createElement("tr");
 
@@ -68,6 +75,21 @@ gFlorCountEl.textContent = result.counts.gFlor;
     debugBox.textContent = `Error: ${err.message}`;
   }
 }
+
+btnOP.addEventListener("click", () => {
+  currentMode = "OP";
+  btnOP.classList.add("active");
+  btnIP.classList.remove("active");
+  loadDashboard();
+});
+
+btnIP.addEventListener("click", () => {
+  currentMode = "IP";
+  btnIP.classList.add("active");
+  btnOP.classList.remove("active");
+  loadDashboard();
+});
+
 
 reportDateInput.addEventListener("change", loadDashboard);
 

@@ -198,28 +198,22 @@ bills.forEach((bill, i) => {
   });
 });
     const doctorStats = {};
+const ipDoctorStats = {};
 
-    opVisits.forEach((v) => {
+// ===== OP =====
+opVisits.forEach((v) => {
   const rawName = v.DOCTOR_NAME || v.DOCTOR_FULL_NAME || "";
   const name = cleanName(rawName);
   if (!name) return;
 
-  // 🟢 نجيب تاريخ الزيارة
   const visitTimeRaw = v.REG_DATE_TIME || null;
   const visitTime = visitTimeRaw ? new Date(visitTimeRaw) : null;
 
-  // 🟢 إذا الدكتور استشاري → نتحقق من الدوام
   const schedule = CONSULTANT_SCHEDULE[name];
-
   if (schedule && visitTime) {
-    const day = visitTime.getDay(); // 0 = Sunday
-
-    if (!schedule.includes(day)) {
-      return; // ❌ خارج الدوام → تجاهل الزيارة
-    }
+    const day = visitTime.getDay();
+    if (!schedule.includes(day)) return;
   }
-
-  // =====================
 
   if (!doctorStats[name]) {
     doctorStats[name] = {
@@ -243,14 +237,44 @@ bills.forEach((bill, i) => {
   }
 });
 
-    const activeDoctors = Object.keys(doctorStats);
+// ===== IP =====
+ipVisits.forEach((v) => {
+  const rawName =
+    v.DOCTOR_NAME ||
+    v.DOCTOR_FULL_NAME ||
+    v.SURGEON_NAME ||
+    v.TREATING_DOCTOR ||
+    "";
+  const name = cleanName(rawName);
+  if (!name) return;
+
+  const visitTimeRaw = v.REG_DATE_TIME || null;
+  const visitTime = visitTimeRaw ? new Date(visitTimeRaw) : null;
+
+  if (!ipDoctorStats[name]) {
+    ipDoctorStats[name] = {
+      name,
+      total: 0,
+      lastTime: null
+    };
+  }
+
+  ipDoctorStats[name].total += 1;
+
+  if (visitTime) {
+    if (!ipDoctorStats[name].lastTime || visitTime > ipDoctorStats[name].lastTime) {
+      ipDoctorStats[name].lastTime = visitTime;
+    }
+  }
+});
+
+const activeDoctors = Object.keys(doctorStats);
 
 const doctorsTable = Object.values(doctorStats)
   .filter(d =>
     ALL_DOCTORS.some(name => d.name.includes(name)) ||
     TABLE_ONLY_DOCTORS.some(name => d.name.includes(name))
   )
-  
   .map(d => ({
     name: d.name,
     total: d.appointment + d.walkin,
@@ -258,6 +282,8 @@ const doctorsTable = Object.values(doctorStats)
   }))
   .sort((a, b) => b.total - a.total);
 
+const ipDoctorsTable = Object.values(ipDoctorStats)
+  .sort((a, b) => b.total - a.total);
 const gFlorCount = doctorsTable
   .filter(d => !d.name.includes("SHERIF HASSAN"))
   .reduce((sum, d) => sum + d.total, 0);
@@ -277,7 +303,8 @@ res.json({
     specialist: countByList(activeDoctors, SPECIALISTS),
     optometry: countByList(activeDoctors, OPTOMETRY)
   },
-  doctorsTable
+  doctorsTable,
+ipDoctorsTable
 });
   } catch (err) {
     res.status(500).json({
