@@ -258,8 +258,7 @@ app.get("/api/dashboard", async (req, res) => {
       }).catch(() => ({ data: { bills: [] } }))
     ]);
 
-    const visits = visitsRes.data?.data || visitsRes.data?.patient_clinical_data || [];
-
+const visits = visitsRes.data?.patientClinicalData || [];
     const bills = Array.isArray(billsRes.data?.bills)
       ? billsRes.data.bills
       : [];
