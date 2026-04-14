@@ -125,10 +125,10 @@ function normalizeDoctorName(name) {
   return String(name || "")
     .toUpperCase()
     .replace("DR.", "")
-    .replace(/[0-9]/g, "")
+    .replace(/[0-9]/g, "")        // يشيل الأرقام
+    .replace(/\./g, "")           // يشيل النقاط
     .replace(/-/g, " ")
-    .replace(/\./g, "")
-    .replace(/\s+/g, " ")
+    .replace(/\s+/g, "")          // 🔥 يشيل كل المسافات
     .trim();
 }
 
@@ -194,7 +194,10 @@ function cleanName(name) {
 
 function isDoctorInList(rawName, doctorList) {
   const n = normalizeDoctorName(rawName);
-  return doctorList.some(doc => n.includes(doc) || doc.includes(n));
+  return doctorList.some(doc => {
+  const d = normalizeDoctorName(doc);
+  return n.includes(d) || d.includes(n);
+});
 }
 
 function countByList(activeDoctors, list) {
