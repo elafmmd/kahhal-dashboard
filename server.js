@@ -202,19 +202,26 @@ function countByList(activeDoctors, list) {
 }
 
 async function getRequestHandlerKey() {
-  const loginUrl =
-    `${BASE_URL}/Login.do?_method=login&hospital_name=${encodeURIComponent(HOSPITAL_NAME)}`;
+  const loginUrl = `${BASE_URL}/Customer/Login.do?_method=login`;
 
-  const loginRes = await axios.get(loginUrl, {
-    headers: {
-      "x-insta-auth": LOGIN_HEADER_AUTH
+  const loginRes = await axios.post(
+    loginUrl,
+    new URLSearchParams({
+      username: process.env.USERNAME,
+      password: process.env.PASSWORD,
+      hospital_name: process.env.HOSPITAL_NAME
+    }),
+    {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      }
     }
-  });
+  );
 
   const requestKey = loginRes.data?.request_handler_key;
 
   if (!requestKey) {
-    throw new Error("request_handler_key not found from login");
+    throw new Error("request_handler_key not found");
   }
 
   return requestKey;
