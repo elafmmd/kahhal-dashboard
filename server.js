@@ -61,7 +61,7 @@ async function getVisits(date) {
 
   // 🔥 نسوي login كل مرة (حل مشكلة انتهاء التوكن)
   await login();
-
+console.log("ENV CHECK:", process.env.USERNAME, process.env.PASSWORD, process.env.HOSPITAL_NAME);
   try {
     const res = await axios.get(
       "https://kahhal.instahmsapi.com/instaapps/Customer/Registration/GeneralRegistration.do",
