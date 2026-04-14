@@ -22,20 +22,23 @@ async function login() {
 
   const res = await axios.post(
     "https://kahhal.instahmsapi.com/instaapps/Customer/Login.do?_method=login",
-    body.toString(),
+    body,
     {
       httpsAgent,
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "Mozilla/5.0",   // 🔥 مهم
+        "Accept": "*/*"
       }
     }
   );
 
+  console.log("LOGIN RAW:", res.data);
+
   if (!res.data?.request_handler_key) {
-    throw new Error(`LOGIN FAILED: ${JSON.stringify(res.data)}`);
+    throw new Error("LOGIN FAILED: " + JSON.stringify(res.data));
   }
 
-  console.log("LOGIN RESPONSE:", res.data);
   return res.data.request_handler_key;
 }
 
