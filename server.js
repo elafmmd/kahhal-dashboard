@@ -236,7 +236,7 @@ app.get("/api/dashboard", async (req, res) => {
     const requestKey = await getRequestHandlerKey();
 
     const visitsUrl =
-      `${BASE_URL}/Registration/GeneralRegistration.do?_method=getPatientVisits` +
+  `${BASE_URL}/api/Registration/GeneralRegistration.do?_method=getPatientVisits` +
       `&from_date=${encodeURIComponent(date + "T00:00:00Z")}` +
       `&to_date=${encodeURIComponent(date + "T23:59:59Z")}` +
       `&center_id=${CENTER_ID}` +
