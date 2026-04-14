@@ -235,12 +235,11 @@ app.get("/api/dashboard", async (req, res) => {
     const date = req.query.date || new Date().toISOString().slice(0, 10);
     const requestKey = await getRequestHandlerKey();
 
-    const visitsUrl =
-  `${BASE_URL}/api/Registration/GeneralRegistration.do?_method=getPatientVisits` +
-      `&from_date=${encodeURIComponent(date + "T00:00:00Z")}` +
-      `&to_date=${encodeURIComponent(date + "T23:59:59Z")}` +
-      `&center_id=${CENTER_ID}` +
-      `&org_id=${ORG_ID}`;
+   const visitsUrl =
+  `${BASE_URL}/Customer/patientclinicaldata.do?_method=getPatientClinicalData` +
+  `&from_date=${encodeURIComponent(date + " 00:00:00")}` +
+  `&to_date=${encodeURIComponent(date + " 23:59:59")}`;
+      
 
     const billsUrl =
       `${BASE_URL}/Bills.do?_method=getBills` +
