@@ -27,26 +27,24 @@ async function login() {
   TOKEN = res.data.request_handler_key;
 }
 
-// 🔹 GET VISITS (endpoint الصحيح + retry)
 async function getVisits(date) {
   try {
     if (!TOKEN) await login();
 
     const res = await axios.get(
-      "https://api.instahealthsolutions.com/kahhal/Customer/Visits.do",
+      "https://api.instahealthsolutions.com/instaapps/Customer/Visits.do",
       {
         headers: {
           request_handler_key: TOKEN
         },
         params: {
           from_date: date,
-          to_date: date,
-          center_id: 1
+          to_date: date
         }
       }
     );
 
-    console.log("VISITS COUNT:", res.data?.length);
+    console.log("VISITS:", res.data?.length);
     return res.data;
 
   } catch (err) {
@@ -55,20 +53,18 @@ async function getVisits(date) {
     await login();
 
     const res = await axios.get(
-      "https://api.instahealthsolutions.com/kahhal/Customer/Visits.do",
+      "https://api.instahealthsolutions.com/instaapps/Customer/Visits.do",
       {
         headers: {
           request_handler_key: TOKEN
         },
         params: {
           from_date: date,
-          to_date: date,
-          center_id: 1
+          to_date: date
         }
       }
     );
 
-    console.log("VISITS COUNT AFTER RETRY:", res.data?.length);
     return res.data;
   }
 }
