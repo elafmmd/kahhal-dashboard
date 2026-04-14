@@ -60,13 +60,10 @@ const IP_DOCTORS = [
 ].map(normalizeDoctorName);
 
 const DAMMAM_DOCTORS = [
-  "Dr. 02 Abdulaziz  Al Rushood",
   "Dr. Mohammaed Al Najar",
-  "Dr. Mahdi Al junaidi",
   "Dr. Qusai Mohammed",
   "Dr. Waqar Mustafa",
   "Dr. Thuraya .",
-  "Dr. 01 Adel Al Rushood",
   "Dr. Ahmed Ezzat",
   "Dr. Dalal Mohammed",
   "Dr. Uday Al Owaifer",
@@ -80,12 +77,10 @@ const DAMMAM_DOCTORS = [
   "Dr. Rayan mohammed",
   "Dr. Abdallah Al Owaid",
   "Dr. Mohanna Al Jindan",
-  "Dr. Alaaldin Abdulmuneim",
   "Dr. Elham Al Tamimi",
   "Dr. Sherif Hassan",
   "Dr. Hind Al Dalgan",
   "Dr. Mofi Al Walmany",
-  "Dr. Lolwa Aldahan",
   "Dr. Abdulrahman Al Ghadyan",
   "Dr. Abdulrahman  Al Hadlag",
   "Dr. Sana Saaed"
