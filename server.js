@@ -1,157 +1,254 @@
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
-const https = require("https");
 const qs = require("qs");
 
 const app = express();
 app.use(cors());
+app.use(express.static(__dirname));
 
-// SSL fix
-const httpsAgent = new https.Agent({
-  rejectUnauthorized: false
-});
+// 🔥 API الجديد فقط
+const BASE_URL = "https://kahhal.instahmsapi.com/instaapps/Customer";
+const HOSPITAL_NAME = "kahhal";
+const LOGIN_HEADER_AUTH = "auto_update:auto_update";
+const CENTER_ID = 1;
+const ORG_ID = "ORG0001";
 
-// الصفحة الرئيسية
-app.get("/", (req, res) => {
-  res.send("API is running");
-});
+// 🔥 أسماء الدكاترة (حدثها هنا فقط إذا عندك قائمة جديدة)
+const CONSULTANTS = [
+  "MOHANNA AL JINDAN",
+  "MUATH ALRUSHOOD",
+  "GHADYAN ABDULRAHMAN",
+  "ABDALLAH ALOWAID",
+  "ELHAM AL TAMIMI",
+  "QUSAI MOHAMMED",
+  "MOFI ALWALMANY",
+  "HIND",
+  "SOMALI ABDULAZIZ",
+  "KHALED ALOTAIBI",
+  "UDAY AL OWAIFER",
+  "ABDULRAHMAN ALHADLAG",
+  "SANA YASSIN"
+];
 
-let TOKEN = null;
+const CONSULTANT_SCHEDULE = {
+  "MUATH ALRUSHOOD": [0, 3],
+  "MOHANNA AL JINDAN": [1, 4, 6],
+  "GHADYAN ABDULRAHMAN": [0, 3],
+  "ABDALLAH ALOWAID": [1, 4, 6],
+  "ELHAM AL TAMIMI": [2, 3, 6],
+  "QUSAI MOHAMMED": [0, 2, 3, 4, 5, 6],
+  "MOFI ALWALMANY": [3],
+  "HIND": [2],
+  "SOMALI ABDULAZIZ": [1, 4],
+  "KHALED ALOTAIBI": [0, 2],
+  "UDAY AL OWAIFER": [0],
+  "ABDULRAHMAN ALHADLAG": [4],
+  "SANA YASSIN": [1, 3]
+};
 
-// ===============================
-// 🔐 LOGIN (مطابق Postman)
-// ===============================
-async function login() {
-  try {
-    const response = await axios.post(
-      "https://kahhal.instahmsapi.com/instaapps/Customer/Login.do?_method=login",
+const SPECIALISTS = [
+  "AHMED EZZAT",
+  "WAQAR MUSTAFA",
+  "NAJAR MOHAMMAED",
+  "RAYAN MOHAMEED",
+  "SANA SAAED",
+  "SARA MUSTAFA"
+];
 
-      qs.stringify({
-        username: process.env.USERNAME,
-        password: process.env.PASSWORD,
-        hospital_name: process.env.HOSPITAL_NAME
-      }),
+const OPTOMETRY = [
+  "DALLAL",
+  "JESEENA",
+  "THURAYA",
+  "SUSHMITHA"
+];
 
-      {
-        httpsAgent,
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "x-insta-auth": `${process.env.USERNAME}:${process.env.PASSWORD}`
-        }
+const ALL_DOCTORS = [
+  ...CONSULTANTS,
+  ...SPECIALISTS,
+  ...OPTOMETRY
+];
+
+const TABLE_ONLY_DOCTORS = [
+  "SHERIF HASSAN"
+];
+
+function cleanName(name) {
+  return (name || "")
+    .toUpperCase()
+    .replace("DR.", "")
+    .replace(/[0-9]/g, "")
+    .replace(/^[A-Z]\s+/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function countByList(activeDoctors, list) {
+  return activeDoctors.filter((d) => list.some((name) => d.includes(name))).length;
+}
+
+// 🔥 LOGIN جديد (بس هذا تغير)
+async function getRequestHandlerKey() {
+  const loginRes = await axios.post(
+    `${BASE_URL}/Login.do?_method=login`,
+    qs.stringify({
+      username: "auto_update",
+      password: "auto_update",
+      hospital_name: HOSPITAL_NAME
+    }),
+    {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "x-insta-auth": LOGIN_HEADER_AUTH
       }
-    );
-
-    if (!response.data.request_handler_key) {
-      throw new Error(JSON.stringify(response.data));
     }
+  );
 
-    TOKEN = response.data.request_handler_key;
+  const requestKey = loginRes.data?.request_handler_key;
 
-    console.log("✅ LOGIN SUCCESS:", TOKEN);
-
-  } catch (err) {
-    console.error("❌ LOGIN ERROR:", err.response?.data || err.message);
-    throw err;
+  if (!requestKey) {
+    throw new Error("request_handler_key not found");
   }
+
+  return requestKey;
 }
 
-// ===============================
-// 📊 GET VISITS + FILTER
-// ===============================
-async function getVisits(date) {
-
-  await login();
-
-  try {
-    const response = await axios.get(
-      "https://kahhal.instahmsapi.com/instaapps/Customer/Registration/GeneralRegistration.do",
-      {
-        httpsAgent,
-        headers: {
-          request_handler_key: TOKEN
-        },
-        params: {
-          _method: "getPatientVisits",
-          from_date: date + "T00:00:00",
-          to_date: date + "T23:59:59"
-        }
-      }
-    );
-
-    const visits = response.data?.patient_visits_details || [];
-
-    console.log("📊 TOTAL VISITS:", visits.length);
-
-    // ===============================
-    // 🔥 فلترة دَمّام
-    // ===============================
-    const dammamVisits = visits.filter(v =>
-      (v.CENTER_NAME || "").toUpperCase().includes("DAMMAM")
-    );
-
-    // ===============================
-    // 🔥 OP / IP
-    // ===============================
-    const op = dammamVisits.filter(v =>
-      (v.VISIT_TYPE || "").toUpperCase() === "OP"
-    );
-
-    const ip = dammamVisits.filter(v =>
-      (v.VISIT_TYPE || "").toUpperCase() === "IP"
-    );
-
-    return {
-      all: visits,
-      dammam: dammamVisits,
-      op,
-      ip
-    };
-
-  } catch (err) {
-    console.error("❌ VISITS ERROR:", err.response?.data || err.message);
-    throw err;
-  }
-}
-
-// ===============================
-// 🚀 API
-// ===============================
 app.get("/api/dashboard", async (req, res) => {
   try {
-    const date = req.query.date;
+    const date = req.query.date || new Date().toISOString().slice(0, 10);
+    const requestKey = await getRequestHandlerKey();
 
-    if (!date) {
-      return res.json({ ok: false, error: "Missing date" });
-    }
+    // 🔥 نفس رابطك القديم بس API جديد
+    const visitsUrl =
+      `${BASE_URL}/Registration/GeneralRegistration.do?_method=getPatientVisits` +
+      `&from_date=${encodeURIComponent(date + "T00:00:00")}` +
+      `&to_date=${encodeURIComponent(date + "T23:59:59")}` +
+      `&center_id=${CENTER_ID}` +
+      `&org_id=${ORG_ID}`;
 
-    const data = await getVisits(date);
+    const billsUrl =
+      `${BASE_URL}/Bills.do?_method=getBills` +
+      `&from_date=${encodeURIComponent(date)}` +
+      `&to_date=${encodeURIComponent(date)}` +
+      `&center_id=${CENTER_ID}` +
+      `&filter_by_finalized_date=N` +
+      `&page=1`;
+
+    const [visitsRes, billsRes] = await Promise.all([
+      axios.get(visitsUrl, {
+        headers: { request_handler_key: requestKey }
+      }),
+      axios.get(billsUrl, {
+        headers: { request_handler_key: requestKey }
+      }).catch(() => ({ data: { bills: [] } }))
+    ]);
+
+    const visits = Array.isArray(visitsRes.data?.patient_visits_details)
+      ? visitsRes.data.patient_visits_details
+      : [];
+
+    const bills = Array.isArray(billsRes.data?.bills)
+      ? billsRes.data.bills
+      : [];
+
+    const opVisits = visits.filter(v =>
+      String(v.VISIT_ID || v.MAIN_VISIT_ID || "").toUpperCase().startsWith("OP")
+    );
+
+    const ipVisits = visits.filter(v =>
+      String(v.VISIT_ID || v.MAIN_VISIT_ID || "").toUpperCase().startsWith("IP")
+    );
+
+    const opPatients = new Set(
+      opVisits.map(v => String(v.MR_NO || "").trim()).filter(Boolean)
+    ).size;
+
+    const ipPatients = new Set(
+      ipVisits.map(v => String(v.MR_NO || "").trim()).filter(Boolean)
+    ).size;
+
+    const lasikPatients = new Set();
+
+    bills.forEach((bill) => {
+      const charges = Array.isArray(bill.charges) ? bill.charges : [];
+
+      charges.forEach((c) => {
+        const desc = String(c.description || "").toUpperCase().trim();
+
+        if (
+          desc.includes("REFRECTIVE SURGERY WORKUP") ||
+          desc.includes("REFRACTIVE SURGERY WORKUP")
+        ) {
+          if (bill.mr_no) lasikPatients.add(bill.mr_no);
+        }
+      });
+    });
+
+    const doctorStats = {};
+
+    opVisits.forEach((v) => {
+      const name = cleanName(v.DOCTOR_NAME || v.DOCTOR_FULL_NAME);
+      if (!name) return;
+
+      if (!doctorStats[name]) {
+        doctorStats[name] = {
+          name,
+          appointment: 0,
+          walkin: 0,
+          lastTime: null
+        };
+      }
+
+      if (v.APPOINTMENT_ID || v.APPOINTMENT_NO) {
+        doctorStats[name].appointment++;
+      } else {
+        doctorStats[name].walkin++;
+      }
+    });
+
+    const activeDoctors = Object.keys(doctorStats);
+
+    const doctorsTable = Object.values(doctorStats)
+      .filter(d =>
+        ALL_DOCTORS.some(name => d.name.includes(name)) ||
+        TABLE_ONLY_DOCTORS.some(name => d.name.includes(name))
+      )
+      .map(d => ({
+        name: d.name,
+        total: d.appointment + d.walkin
+      }))
+      .sort((a, b) => b.total - a.total);
+
+    const gFlorCount = doctorsTable
+      .filter(d => !d.name.includes("SHERIF HASSAN"))
+      .reduce((sum, d) => sum + d.total, 0);
 
     res.json({
       ok: true,
+      date,
       counts: {
-        dammamOpRecords: data.op.length,
-        dammamIpRecords: data.ip.length,
-        gFlor: 0
+        appointments: 0,
+        opPatients,
+        ipPatients,
+        lasikWorkup: lasikPatients.size,
+        gFlor: gFlorCount
       },
-      doctorsTable: [],
-      ipDoctorsTable: [],
-      total: data.dammam.length
+      doctors: {
+        consultant: countByList(activeDoctors, CONSULTANTS),
+        specialist: countByList(activeDoctors, SPECIALISTS),
+        optometry: countByList(activeDoctors, OPTOMETRY)
+      },
+      doctorsTable
     });
 
   } catch (err) {
-    res.json({
+    res.status(500).json({
       ok: false,
-      error: err.response?.data || err.message
+      error: err.message
     });
   }
 });
 
-// ===============================
-// 🟢 START
-// ===============================
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+app.listen(3000, () => {
+  console.log("🚀 Server running on http://localhost:3000");
 });
