@@ -18,33 +18,37 @@ app.get("/", (req, res) => {
 
 let TOKEN = null;
 
-// ===============================
-// 🔐 LOGIN
-// ===============================
-async function login() {
+async function getVisits(date) {
+  // 🔥 دايم نسوي login جديد
+  await login();
+
   try {
-    const res = await axios.post(
-      "https://kahhal.instahmsapi.com/instaapps/Customer/Login.do?_method=login",
-      new URLSearchParams({
-        username: "auto_update",
-        password: "auto_update",
-        hospital_name: "kahhal"
-      }),
+    const res = await axios.get(
+      "https://kahhal.instahmsapi.com/instaapps/Customer/Registration/GeneralRegistration.do",
       {
-        httpsAgent
+        httpsAgent,
+        headers: {
+          request_handler_key: TOKEN
+        },
+        params: {
+          _method: "getPatientVisits",
+          from_date: date,
+          to_date: date
+        }
       }
     );
 
-    TOKEN = res.data.request_handler_key;
+    const visits = res.data?.patient_visits_details || [];
 
-    console.log("✅ LOGIN SUCCESS");
+    console.log("📊 VISITS:", visits.length);
+
+    return visits;
 
   } catch (err) {
-    console.error("❌ LOGIN ERROR:", err.message);
+    console.error("❌ API ERROR FULL:", err.response?.data || err.message);
     throw err;
   }
 }
-
 // ===============================
 // 📊 GET VISITS
 // ===============================
