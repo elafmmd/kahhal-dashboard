@@ -7,12 +7,10 @@ const qs = require("qs");
 const app = express();
 app.use(cors());
 
-// 🔥 حل SSL
 const httpsAgent = new https.Agent({
   rejectUnauthorized: false
 });
 
-// الصفحة الرئيسية
 app.get("/", (req, res) => {
   res.send("API is running");
 });
@@ -20,37 +18,30 @@ app.get("/", (req, res) => {
 let TOKEN = null;
 
 // ===============================
-// 🔐 LOGIN
+// 🔐 LOGIN (محاكاة Postman)
 // ===============================
 async function login() {
   try {
 
-    // 🔥 اطبع القيم (أهم خطوة حالياً)
-    console.log("USERNAME =", process.env.USERNAME);
-    console.log("PASSWORD =", process.env.PASSWORD);
-    console.log("HOSPITAL_NAME =", process.env.HOSPITAL_NAME);
+    const response = await axios({
+      method: "POST",
+      url: "https://kahhal.instahmsapi.com/instaapps/Customer/Login.do?_method=login",
 
-    const response = await axios.post(
-      "https://kahhal.instahmsapi.com/instaapps/Customer/Login.do?_method=login",
-
-      qs.stringify({
+      data: qs.stringify({
         username: process.env.USERNAME,
         password: process.env.PASSWORD,
         hospital_name: process.env.HOSPITAL_NAME
       }),
 
-      {
-        httpsAgent,
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        }
-      }
-    );
+      httpsAgent,
 
-    if (!response.data.request_handler_key) {
-      console.error("❌ LOGIN RESPONSE:", response.data);
-      throw new Error("Login failed");
-    }
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "PostmanRuntime/7.32.3",
+        "Accept": "*/*",
+        "Connection": "keep-alive"
+      }
+    });
 
     TOKEN = response.data.request_handler_key;
 
@@ -69,32 +60,23 @@ async function getVisits(date) {
 
   await login();
 
-  try {
-    const response = await axios.get(
-      "https://kahhal.instahmsapi.com/instaapps/Customer/Registration/GeneralRegistration.do",
-      {
-        httpsAgent,
-        headers: {
-          request_handler_key: TOKEN
-        },
-        params: {
-          _method: "getPatientVisits",
-          from_date: date,
-          to_date: date
-        }
+  const response = await axios.get(
+    "https://kahhal.instahmsapi.com/instaapps/Customer/Registration/GeneralRegistration.do",
+    {
+      httpsAgent,
+      headers: {
+        request_handler_key: TOKEN,
+        "User-Agent": "PostmanRuntime/7.32.3"
+      },
+      params: {
+        _method: "getPatientVisits",
+        from_date: date,
+        to_date: date
       }
-    );
+    }
+  );
 
-    const visits = response.data?.patient_visits_details || [];
-
-    console.log("📊 VISITS:", visits.length);
-
-    return visits;
-
-  } catch (err) {
-    console.error("❌ VISITS ERROR:", err.response?.data || err.message);
-    throw err;
-  }
+  return response.data?.patient_visits_details || [];
 }
 
 // ===============================
@@ -130,8 +112,6 @@ app.get("/api/dashboard", async (req, res) => {
   }
 });
 
-// ===============================
-// 🟢 START
 // ===============================
 const PORT = process.env.PORT || 3000;
 
