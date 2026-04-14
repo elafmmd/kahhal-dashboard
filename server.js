@@ -6,12 +6,24 @@ const https = require("https");
 const app = express();
 app.use(cors());
 
-// 🔥 حل مشكلة SSL
+// ===============================
+// 🔥 SSL FIX
+// ===============================
 const httpsAgent = new https.Agent({
   rejectUnauthorized: false
 });
 
-// الصفحة الرئيسية
+// ===============================
+// 🔑 ENV
+// ===============================
+const BASE_URL = process.env.BASE_URL;
+const USERNAME = process.env.USERNAME;
+const PASSWORD = process.env.PASSWORD;
+const HOSPITAL_NAME = process.env.HOSPITAL_NAME;
+
+// ===============================
+// 🏠 HOME
+// ===============================
 app.get("/", (req, res) => {
   res.send("API is running");
 });
@@ -23,25 +35,22 @@ let TOKEN = null;
 // ===============================
 async function login() {
   try {
-    const body = new URLSearchParams();
-    body.append("username", process.env.USERNAME);
-    body.append("password", process.env.PASSWORD);
-    body.append("hospital_name", process.env.HOSPITAL_NAME);
+    console.log("🔐 LOGIN START...");
 
-    console.log("🔐 TRY LOGIN WITH:", {
-      USERNAME: process.env.USERNAME,
-      PASSWORD: process.env.PASSWORD ? "*****" : "❌ EMPTY",
-      HOSPITAL: process.env.HOSPITAL_NAME
-    });
+    const body = new URLSearchParams();
+    body.append("username", USERNAME);
+    body.append("password", PASSWORD);
+    body.append("hospital_name", HOSPITAL_NAME);
 
     const res = await axios.post(
-      "https://kahhal.instahmsapi.com/instaapps/Customer/Login.do?_method=login",
+      `${BASE_URL}/Customer/Login.do?_method=login`,
       body,
       { httpsAgent }
     );
 
     if (!res.data?.request_handler_key) {
-      throw new Error("LOGIN FAILED: " + JSON.stringify(res.data));
+      console.error("❌ LOGIN FAILED:", res.data);
+      throw new Error("Login failed");
     }
 
     TOKEN = res.data.request_handler_key;
@@ -59,12 +68,12 @@ async function login() {
 // ===============================
 async function getVisits(date) {
 
-  // 🔥 نسوي login كل مرة (حل مشكلة انتهاء التوكن)
+  // 🔥 نسوي login كل مرة (عشان التوكن ينتهي بسرعة)
   await login();
-console.log("ENV CHECK:", process.env.USERNAME, process.env.PASSWORD, process.env.HOSPITAL_NAME);
+
   try {
     const res = await axios.get(
-      "https://kahhal.instahmsapi.com/instaapps/Customer/Registration/GeneralRegistration.do",
+      `${BASE_URL}/Customer/Registration/GeneralRegistration.do`,
       {
         httpsAgent,
         headers: {
