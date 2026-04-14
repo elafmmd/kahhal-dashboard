@@ -1,3 +1,6 @@
+app.get("/", (req, res) => {
+  res.send("API is running");
+});
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
