@@ -15,62 +15,61 @@ btnOP.classList.add("active");
 function normalizeName(name) {
   return String(name || "")
     .toUpperCase()
-    .replace("DR.", "")              
-    .replace(/[0-9]/g, "")           
-    .replace(/-/g, " ")              
-    .replace(/\./g, "")              
-    .replace(/\s+/g, " ")            
+    .replace("DR.", "")
+    .replace(/[0-9]/g, "")
+    .replace(/-/g, " ")
+    .replace(/\./g, "")
+    .replace(/\s+/g, "")
     .trim();
 }
 
 const IP_DOCTORS = [
-  "ADEL RUSHOOD",
-  "ABDULAZIZ RUSHOOD",
-  "MOHANNA AL JINDAN",
-  "MUATH ALRUSHOOD",
-  "GHADYAN ABDULRAHMAN",
-  "ABDALLAH ALOWAID",
-  "ELHAM AL TAMIMI",
-  "QUSAI MOHAMMED",
-  "MOFI ALWALMANY",
-  "HIND AL DALGAN",
-  "SOMALI ABDULAZIZ",
-  "KHALED ALOTAIBI",
-  "UDAY AL OWAIFER",
-  "ABDULRAHMAN ALHADLAG",
-  "SANA YASSIN"
+  "Dr. 02 Abdulaziz  Al Rushood",
+  "Dr. Qusai Mohammed",
+  "Dr. 01 Adel Al Rushood",
+  "Dr. Uday Al Owaifer",
+  "Dr. Khaled  Al Otaibi",
+  "Dr. Muath Al Rushood",
+  "Dr. Sana Yassin",
+  "Dr. Abdallah Al Owaid",
+  "Dr. Mohanna Al Jindan",
+  "Dr. Elham Al Tamimi",
+  "Dr. Hind Al Dalgan",
+  "Dr. Mofi Al Walmany",
+  "Dr. Abdulrahman Al Ghadyan",
+  "Dr. Abdulrahman  Al Hadlag"
 ].map(normalizeName);
 
 const DAMMAM_DOCTORS = [
-  "ADEL RUSHOOD",
-  "ABDULAZIZ RUSHOOD",
-  "MOHANNA AL JINDAN",
-  "MUATH ALRUSHOOD",
-  "GHADYAN ABDULRAHMAN",
-  "ABDALLAH ALOWAID",
-  "ELHAM AL TAMIMI",
-  "QUSAI MOHAMMED",
-  "MOFI ALWALMANY",
-  "HIND AL DALGAN",
-  "SOMALI ABDULAZIZ",
-  "KHALED ALOTAIBI",
-  "UDAY AL OWAIFER",
-  "ABDULRAHMAN ALHADLAG",
-  "SANA YASSIN",
-  "AHMED EZZAT",
-  "WAQAR MUSTAFA",
-  "NAJAR MOHAMMAED",
-  "RAYAN MOHAMEED",
-  "SANA SAAED",
-  "SARA MUSTAFA",
-  "DALLAL MOHAMMAD AL MADANI",
-  "JESEENA JAMALUDIN",
-  "THURAYA",
-  "SUSHMITHA ARCOT",
-  "ALAAELDIN ABDULMONEIM",
-  "MAHDI ABDULLA AL JUNAIDI",
-  "SHERIF HASSAN",
-  "QURAIN ABDULAZIZ"
+  "Dr. 02 Abdulaziz  Al Rushood",
+  "Dr. Mohammaed Al Najar",
+  "Dr. Mahdi Al junaidi",
+  "Dr. Qusai Mohammed",
+  "Dr. Waqar Mustafa",
+  "Dr. Thuraya .",
+  "Dr. 01 Adel Al Rushood",
+  "Dr. Ahmed Ezzat",
+  "Dr. Dalal Mohammed",
+  "Dr. Uday Al Owaifer",
+  "Dr. jessena .",
+  "Dr. Khaled  Al Otaibi",
+  "Dr. Muath Al Rushood",
+  "Dr. Sara Mustafa",
+  "Dr. Sashmtha .",
+  "Dr. Sana Yassin",
+  "Dr. Abdulaziz Al Somali",
+  "Dr. Rayan mohammed",
+  "Dr. Abdallah Al Owaid",
+  "Dr. Mohanna Al Jindan",
+  "Dr. Alaaldin Abdulmuneim",
+  "Dr. Elham Al Tamimi",
+  "Dr. Sherif Hassan",
+  "Dr. Hind Al Dalgan",
+  "Dr. Mofi Al Walmany",
+  "Dr. Lolwa Aldahan",
+  "Dr. Abdulrahman Al Ghadyan",
+  "Dr. Abdulrahman  Al Hadlag",
+  "Dr. Sana Saaed"
 ].map(normalizeName);
 function formatDate(date) {
   return date.toISOString().split("T")[0];

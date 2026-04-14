@@ -14,19 +14,18 @@ const CENTER_ID = process.env.CENTER_ID;
 const ORG_ID = process.env.ORG_ID;
 
 const CONSULTANTS = [
-  "MOHANNA AL JINDAN",
-  "MUATH ALRUSHOOD",
-  "GHADYAN ABDULRAHMAN",
-  "ABDALLAH ALOWAID",
-  "ELHAM AL TAMIMI",
-  "QUSAI MOHAMMED",
-  "MOFI ALWALMANY",
-  "HIND",
-  "SOMALI ABDULAZIZ",
-  "KHALED ALOTAIBI",
-  "UDAY AL OWAIFER",
-  "ABDULRAHMAN ALHADLAG",
-  "SANA YASSIN"
+  "Dr. Qusai Mohammed",
+  "Dr. Muath Al Rushood",
+  "Dr. Mohanna Al Jindan",
+  "Dr. Abdallah Al Owaid",
+  "Dr. Elham Al Tamimi",
+  "Dr. Mofi Al Walmany",
+  "Dr. Hind Al Dalgan",
+  "Dr. Khaled  Al Otaibi",
+  "Dr. Uday Al Owaifer",
+  "Dr. Abdulrahman  Al Hadlag",
+  "Dr. Sana Yassin",
+  "Dr. Abdulrahman Al Ghadyan"
 ];
 
 const IP_DOCTORS = [
@@ -96,19 +95,26 @@ const CONSULTANT_SCHEDULE = {
 };
 
 const SPECIALISTS = [
-  "AHMED EZZAT",
-  "WAQAR MUSTAFA",
-  "NAJAR MOHAMMAED",
-  "RAYAN MOHAMEED",
-  "SANA SAAED",
-  "SARA MUSTAFA"
+  "Dr. Ahmed Ezzat",
+  "Dr. Waqar Mustafa",
+  "Dr. Mohammaed Al Najar",
+  "Dr. Rayan mohammed",
+  "Dr. Sana Saaed",
+  "Dr. Sara Mustafa",
+  "Dr. Mahdi Al junaidi",
+  "Dr. Abdulaziz Al Somali",
+  "Dr. 01 Adel Al Rushood",
+  "Dr. 02 Abdulaziz  Al Rushood",
+  "Dr. Sherif Hassan",
+  "Dr. Alaaldin Abdulmuneim",
+  "Dr. Lolwa Aldahan"
 ];
 
 const OPTOMETRY = [
-  "DALLAL",
-  "JESEENA",
-  "THURAYA",
-  "SUSHMITHA"
+  "Dr. Dalal Mohammed",
+  "Dr. jessena .",
+  "Dr. Thuraya .",
+  "Dr. Sashmtha ."
 ];
 
 const ALL_DOCTORS = [
@@ -165,29 +171,29 @@ const DAMMAM_DOCTORS = [
 ];
 
 const DAMMAM_IP_DOCTORS = [
-  "ADEL RUSHOOD",
-  "ABDULAZIZ RUSHOOD",
-  "MOHANNA AL JINDAN",
-  "MUATH ALRUSHOOD",
-  "GHADYAN ABDULRAHMAN",
-  "ABDALLAH ALOWAID",
-  "ELHAM AL TAMIMI",
-  "QUSAI MOHAMMED",
-  "MOFI ALWALMANY",
-  "HIND AL DALGAN",
-  "SOMALI ABDULAZIZ",
-  "KHALED ALOTAIBI",
-  "UDAY AL OWAIFER",
-  "ABDULRAHMAN ALHADLAG",
-  "SANA YASSIN"
-].map(normalizeDoctorName);
+  "Dr. 02 Abdulaziz  Al Rushood",
+  "Dr. Qusai Mohammed",
+  "Dr. 01 Adel Al Rushood",
+  "Dr. Uday Al Owaifer",
+  "Dr. Khaled  Al Otaibi",
+  "Dr. Muath Al Rushood",
+  "Dr. Sana Yassin",
+  "Dr. Abdallah Al Owaid",
+  "Dr. Mohanna Al Jindan",
+  "Dr. Elham Al Tamimi",
+  "Dr. Hind Al Dalgan",
+  "Dr. Mofi Al Walmany",
+  "Dr. Abdulrahman Al Ghadyan",
+  "Dr. Abdulrahman  Al Hadlag"
+];
 
 function cleanName(name) {
-  return (name || "")
+  return String(name || "")
     .toUpperCase()
     .replace("DR.", "")
     .replace(/[0-9]/g, "")
-    .replace(/^[A-Z]\s+/g, "")
+    .replace(/\./g, "")
+    .replace(/-/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -201,7 +207,7 @@ function isDoctorInList(rawName, doctorList) {
 }
 
 function countByList(activeDoctors, list) {
-  return activeDoctors.filter((d) => list.some((name) => d.includes(name))).length;
+  return activeDoctors.filter((d) => isDoctorInList(d, list)).length;
 }
 
 async function getRequestHandlerKey() {
@@ -258,13 +264,27 @@ app.get("/api/dashboard", async (req, res) => {
       }).catch(() => ({ data: { bills: [] } }))
     ]);
 
-const visits = visitsRes.data?.patientClinicalData || [];
-    const bills = Array.isArray(billsRes.data?.bills)
+const visits =
+  visitsRes.data?.patientClinicalData ||
+  visitsRes.data?.patient_clinical_data ||
+  visitsRes.data?.data ||
+  visitsRes.data?.visits ||
+  [];
+  console.log("FULL RESPONSE:", visitsRes.data);
+console.log("VISITS LENGTH:", visits.length);    const bills = Array.isArray(billsRes.data?.bills)
       ? billsRes.data.bills
       : [];
 console.log("VISITS LENGTH:", visits.length);
-    const opVisits = visits;
-const ipVisits = [];
+    const opVisits = visits.filter(v =>
+  isDoctorInList(v.DOCTOR_NAME || v.DOCTOR_FULL_NAME || "", DAMMAM_DOCTORS)
+);
+
+const ipVisits = visits.filter(v =>
+  isDoctorInList(
+    v.DOCTOR_NAME || v.DOCTOR_FULL_NAME || v.SURGEON_NAME || v.TREATING_DOCTOR || "",
+    DAMMAM_IP_DOCTORS
+  )
+);
 
     const opPatients = new Set(
       opVisits.map(v => String(v.MR_NO || v.mr_no || "").trim()).filter(Boolean)
@@ -414,16 +434,13 @@ const dammamIpRecords = ipVisits.filter(v =>
     const activeDoctors = Object.keys(doctorStats);
 
     const doctorsTable = Object.values(doctorStats)
-      .filter(d =>
-        ALL_DOCTORS.some(name => d.name.includes(name)) ||
-        TABLE_ONLY_DOCTORS.some(name => d.name.includes(name))
-      )
-      .map(d => ({
-        name: d.name,
-        total: d.appointment + d.walkin,
-        lastTime: d.lastTime
-      }))
-      .sort((a, b) => b.total - a.total);
+  .filter(d => isDoctorInList(d.name, DAMMAM_DOCTORS))
+  .map(d => ({
+    name: d.name,
+    total: d.appointment + d.walkin,
+    lastTime: d.lastTime
+  }))
+  .sort((a, b) => b.total - a.total);
 
     const ipDoctorsTable = Object.values(ipDoctorStats)
       .sort((a, b) => b.total - a.total);
