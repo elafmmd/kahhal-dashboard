@@ -1,13 +1,13 @@
-app.get("/", (req, res) => {
-  res.send("API is running");
-});
+
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
 
 const app = express();
 app.use(cors());
-
+app.get("/", (req, res) => {
+  res.send("API is running");
+});
 let TOKEN = null;
 
 // 🔹 تسجيل دخول
