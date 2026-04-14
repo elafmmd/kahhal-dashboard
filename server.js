@@ -1,19 +1,21 @@
-
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
 
 const app = express();
 app.use(cors());
+
+// ✅ Route أساسي
 app.get("/", (req, res) => {
   res.send("API is running");
 });
+
 let TOKEN = null;
 
-// 🔹 تسجيل دخول
+// 🔹 LOGIN (صححنا الرابط)
 async function login() {
   const res = await axios.post(
-    "https://kahhal.instahmsapi.com/instaapps/Customer/Login.do?_method=login",
+    "https://api.instahealthsolutions.com/instaapps/Customer/Login.do?_method=login",
     new URLSearchParams({
       username: "auto_update",
       password: "auto_update",
@@ -21,40 +23,60 @@ async function login() {
     })
   );
 
-  console.log("LOGIN RESPONSE:", res.data);
-
+  console.log("LOGIN OK");
   TOKEN = res.data.request_handler_key;
 }
 
-// 🔹 جلب البيانات
+// 🔹 GET VISITS (مع retry)
 async function getVisits(date) {
-  if (!TOKEN) await login();
+  try {
+    if (!TOKEN) await login();
 
-  const res = await axios.get(
-    "https://api.instahealthsolutions.com/instaapps/Customer/patientclinicaldata.do?_method=getPatientClinicalData",
-    {
-      headers: {
-        request_handler_key: TOKEN
-      },
-      params: {
-        from_date: date,
-        to_date: date
+    const res = await axios.get(
+      "https://api.instahealthsolutions.com/instaapps/Customer/patientclinicaldata.do?_method=getPatientClinicalData",
+      {
+        headers: {
+          request_handler_key: TOKEN
+        },
+        params: {
+          from_date: date,
+          to_date: date
+        }
       }
-    }
-  );
+    );
 
-  console.log("VISITS LENGTH:", res.data?.length);
-  console.log("RAW VISITS:", res.data);
+    return res.data;
 
-  return res.data;
+  } catch (err) {
+    // 🔥 إذا التوكن انتهى
+    console.log("TOKEN EXPIRED → RELOGIN");
+    await login();
+
+    const res = await axios.get(
+      "https://api.instahealthsolutions.com/instaapps/Customer/patientclinicaldata.do?_method=getPatientClinicalData",
+      {
+        headers: {
+          request_handler_key: TOKEN
+        },
+        params: {
+          from_date: date,
+          to_date: date
+        }
+      }
+    );
+
+    return res.data;
+  }
 }
 
-// 🔹 API حقك
+// 🔹 API
 app.get("/api/dashboard", async (req, res) => {
   try {
     const date = req.query.date;
 
     const visits = await getVisits(date);
+
+    console.log("VISITS:", visits?.length);
 
     res.json({
       ok: true,
@@ -63,7 +85,7 @@ app.get("/api/dashboard", async (req, res) => {
         dammamIpRecords: 0,
         gFlor: 0
       },
-      doctorsTable: [],
+      doctorsTable: visits || [], // 👈 مؤقت عشان نشوف البيانات
       ipDoctorsTable: [],
       date
     });
@@ -74,4 +96,6 @@ app.get("/api/dashboard", async (req, res) => {
   }
 });
 
-app.listen(3000, () => console.log("Server running"));
+// 🔹 PORT (مهم لـ Render)
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("Server running on", PORT));
