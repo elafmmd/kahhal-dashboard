@@ -7,7 +7,7 @@ const qs = require("qs");
 const app = express();
 app.use(cors());
 
-// 🔥 حل SSL
+// SSL
 const httpsAgent = new https.Agent({
   rejectUnauthorized: false
 });
@@ -20,7 +20,7 @@ app.get("/", (req, res) => {
 let TOKEN = null;
 
 // ===============================
-// 🔐 LOGIN (مطابق Postman 100%)
+// 🔐 LOGIN
 // ===============================
 async function login() {
   try {
@@ -39,17 +39,13 @@ async function login() {
         httpsAgent,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-          "x-insta-auth": `${username}:${password}` // 🔥 هذا السر
+          "x-insta-auth": `${username}:${password}`
         },
         params: {
           _method: "login"
         }
       }
     );
-
-    if (!response.data.request_handler_key) {
-      throw new Error(JSON.stringify(response.data));
-    }
 
     TOKEN = response.data.request_handler_key;
 
@@ -62,11 +58,10 @@ async function login() {
 }
 
 // ===============================
-// 📊 GET VISITS
+// 📊 GET VISITS (بدون تاريخ)
 // ===============================
-async function getVisits(date) {
+async function getVisits() {
 
-  // 🔥 دايم نسوي login
   await login();
 
   try {
@@ -76,12 +71,10 @@ async function getVisits(date) {
         httpsAgent,
         headers: {
           request_handler_key: TOKEN,
-          "x-insta-auth": `${process.env.USERNAME}:${process.env.PASSWORD}` // 🔥 مهم
+          "x-insta-auth": `${process.env.USERNAME}:${process.env.PASSWORD}`
         },
         params: {
-          _method: "getPatientVisits",
-          from_date: date,
-          to_date: date
+          _method: "getPatientVisits"
         }
       }
     );
@@ -103,13 +96,8 @@ async function getVisits(date) {
 // ===============================
 app.get("/api/dashboard", async (req, res) => {
   try {
-    const date = req.query.date;
 
-    if (!date) {
-      return res.json({ ok: false, error: "Missing date" });
-    }
-
-    const visits = await getVisits(date);
+    const visits = await getVisits();
 
     res.json({
       ok: true,
@@ -120,7 +108,7 @@ app.get("/api/dashboard", async (req, res) => {
       },
       doctorsTable: [],
       ipDoctorsTable: [],
-      date
+      total: visits.length
     });
 
   } catch (err) {
