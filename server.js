@@ -1,11 +1,17 @@
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
+const https = require("https");
 
 const app = express();
 app.use(cors());
 
-// ✅ الصفحة الرئيسية (عشان ما يطلع Cannot GET /)
+// 🔥 حل مشكلة SSL (مهم جداً)
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false
+});
+
+// الصفحة الرئيسية
 app.get("/", (req, res) => {
   res.send("API is running");
 });
@@ -23,7 +29,10 @@ async function login() {
         username: "auto_update",
         password: "auto_update",
         hospital_name: "kahhal"
-      })
+      }),
+      {
+        httpsAgent
+      }
     );
 
     TOKEN = res.data.request_handler_key;
@@ -37,7 +46,7 @@ async function login() {
 }
 
 // ===============================
-// 📊 GET VISITS (API الصحيح)
+// 📊 GET VISITS
 // ===============================
 async function getVisits(date) {
   if (!TOKEN) await login();
@@ -46,6 +55,7 @@ async function getVisits(date) {
     const res = await axios.get(
       "https://kahhal.instahmsapi.com/instaapps/Customer/Registration/GeneralRegistration.do",
       {
+        httpsAgent,
         headers: {
           request_handler_key: TOKEN
         },
@@ -74,6 +84,7 @@ async function getVisits(date) {
       const retry = await axios.get(
         "https://kahhal.instahmsapi.com/instaapps/Customer/Registration/GeneralRegistration.do",
         {
+          httpsAgent,
           headers: {
             request_handler_key: TOKEN
           },
@@ -94,7 +105,7 @@ async function getVisits(date) {
 }
 
 // ===============================
-// 🚀 API ENDPOINT
+// 🚀 API
 // ===============================
 app.get("/api/dashboard", async (req, res) => {
   try {
@@ -106,17 +117,14 @@ app.get("/api/dashboard", async (req, res) => {
 
     const visits = await getVisits(date);
 
-    // 🔥 حسابات بسيطة (تقدر تطورها بعدين)
-    const opCount = visits.length;
-
     res.json({
       ok: true,
       counts: {
-        dammamOpRecords: opCount,
+        dammamOpRecords: visits.length,
         dammamIpRecords: 0,
         gFlor: 0
       },
-      doctorsTable: [], // نضيفها بعدين
+      doctorsTable: [],
       ipDoctorsTable: [],
       date
     });
@@ -132,7 +140,7 @@ app.get("/api/dashboard", async (req, res) => {
 });
 
 // ===============================
-// 🟢 START SERVER
+// 🟢 START
 // ===============================
 const PORT = process.env.PORT || 3000;
 
