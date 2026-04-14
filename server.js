@@ -2,7 +2,7 @@ const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
 const https = require("https");
-const qs = require("qs"); // 🔥 مهم جداً
+const qs = require("qs");
 
 const app = express();
 app.use(cors());
@@ -20,14 +20,19 @@ app.get("/", (req, res) => {
 let TOKEN = null;
 
 // ===============================
-// 🔐 LOGIN (مطابق Postman 100%)
+// 🔐 LOGIN
 // ===============================
 async function login() {
   try {
+
+    // 🔥 اطبع القيم (أهم خطوة حالياً)
+    console.log("USERNAME =", process.env.USERNAME);
+    console.log("PASSWORD =", process.env.PASSWORD);
+    console.log("HOSPITAL_NAME =", process.env.HOSPITAL_NAME);
+
     const response = await axios.post(
       "https://kahhal.instahmsapi.com/instaapps/Customer/Login.do?_method=login",
 
-      // 🔥 هذا أهم شيء (مثل Postman)
       qs.stringify({
         username: process.env.USERNAME,
         password: process.env.PASSWORD,
@@ -42,9 +47,9 @@ async function login() {
       }
     );
 
-    // 🔥 تأكد من الرد
     if (!response.data.request_handler_key) {
-      throw new Error(JSON.stringify(response.data));
+      console.error("❌ LOGIN RESPONSE:", response.data);
+      throw new Error("Login failed");
     }
 
     TOKEN = response.data.request_handler_key;
@@ -62,7 +67,6 @@ async function login() {
 // ===============================
 async function getVisits(date) {
 
-  // 🔥 دايم نسوي login (عشان التوكن ينتهي بسرعة)
   await login();
 
   try {
