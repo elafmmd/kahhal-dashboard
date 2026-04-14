@@ -7,7 +7,7 @@ const qs = require("qs");
 const app = express();
 app.use(cors());
 
-// SSL
+// SSL fix
 const httpsAgent = new https.Agent({
   rejectUnauthorized: false
 });
@@ -20,32 +20,31 @@ app.get("/", (req, res) => {
 let TOKEN = null;
 
 // ===============================
-// 🔐 LOGIN
+// 🔐 LOGIN (مطابق Postman)
 // ===============================
 async function login() {
   try {
-    const username = process.env.USERNAME;
-    const password = process.env.PASSWORD;
-    const hospital = process.env.HOSPITAL_NAME;
-
     const response = await axios.post(
-      "https://kahhal.instahmsapi.com/instaapps/Customer/Login.do",
+      "https://kahhal.instahmsapi.com/instaapps/Customer/Login.do?_method=login",
+
       qs.stringify({
-        username: username,
-        password: password,
-        hospital_name: hospital
+        username: process.env.USERNAME,
+        password: process.env.PASSWORD,
+        hospital_name: process.env.HOSPITAL_NAME
       }),
+
       {
         httpsAgent,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-          "x-insta-auth": `${username}:${password}`
-        },
-        params: {
-          _method: "login"
+          "x-insta-auth": `${process.env.USERNAME}:${process.env.PASSWORD}`
         }
       }
     );
+
+    if (!response.data.request_handler_key) {
+      throw new Error(JSON.stringify(response.data));
+    }
 
     TOKEN = response.data.request_handler_key;
 
@@ -58,9 +57,9 @@ async function login() {
 }
 
 // ===============================
-// 📊 GET VISITS (بدون تاريخ)
+// 📊 GET VISITS + FILTER
 // ===============================
-async function getVisits() {
+async function getVisits(date) {
 
   await login();
 
@@ -70,20 +69,44 @@ async function getVisits() {
       {
         httpsAgent,
         headers: {
-          request_handler_key: TOKEN,
-          "x-insta-auth": `${process.env.USERNAME}:${process.env.PASSWORD}`
+          request_handler_key: TOKEN
         },
         params: {
-          _method: "getPatientVisits"
+          _method: "getPatientVisits",
+          from_date: date + "T00:00:00",
+          to_date: date + "T23:59:59"
         }
       }
     );
 
     const visits = response.data?.patient_visits_details || [];
 
-    console.log("📊 VISITS:", visits.length);
+    console.log("📊 TOTAL VISITS:", visits.length);
 
-    return visits;
+    // ===============================
+    // 🔥 فلترة دَمّام
+    // ===============================
+    const dammamVisits = visits.filter(v =>
+      (v.CENTER_NAME || "").toUpperCase().includes("DAMMAM")
+    );
+
+    // ===============================
+    // 🔥 OP / IP
+    // ===============================
+    const op = dammamVisits.filter(v =>
+      (v.VISIT_TYPE || "").toUpperCase() === "OP"
+    );
+
+    const ip = dammamVisits.filter(v =>
+      (v.VISIT_TYPE || "").toUpperCase() === "IP"
+    );
+
+    return {
+      all: visits,
+      dammam: dammamVisits,
+      op,
+      ip
+    };
 
   } catch (err) {
     console.error("❌ VISITS ERROR:", err.response?.data || err.message);
@@ -96,19 +119,24 @@ async function getVisits() {
 // ===============================
 app.get("/api/dashboard", async (req, res) => {
   try {
+    const date = req.query.date;
 
-    const visits = await getVisits();
+    if (!date) {
+      return res.json({ ok: false, error: "Missing date" });
+    }
+
+    const data = await getVisits(date);
 
     res.json({
       ok: true,
       counts: {
-        dammamOpRecords: visits.length,
-        dammamIpRecords: 0,
+        dammamOpRecords: data.op.length,
+        dammamIpRecords: data.ip.length,
         gFlor: 0
       },
       doctorsTable: [],
       ipDoctorsTable: [],
-      total: visits.length
+      total: data.dammam.length
     });
 
   } catch (err) {
