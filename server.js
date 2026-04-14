@@ -258,21 +258,14 @@ app.get("/api/dashboard", async (req, res) => {
       }).catch(() => ({ data: { bills: [] } }))
     ]);
 
-    const visits = Array.isArray(visitsRes.data?.patient_visits_details)
-      ? visitsRes.data.patient_visits_details
-      : [];
+    const visits = visitsRes.data?.data || visitsRes.data?.patient_clinical_data || [];
 
     const bills = Array.isArray(billsRes.data?.bills)
       ? billsRes.data.bills
       : [];
-
-    const opVisits = visits.filter(v =>
-      String(v.VISIT_ID || v.MAIN_VISIT_ID || "").toUpperCase().startsWith("OP")
-    );
-
-    const ipVisits = visits.filter(v =>
-      String(v.VISIT_ID || v.MAIN_VISIT_ID || "").toUpperCase().startsWith("IP")
-    );
+console.log("VISITS LENGTH:", visits.length);
+    const opVisits = visits;
+const ipVisits = [];
 
     const opPatients = new Set(
       opVisits.map(v => String(v.MR_NO || v.mr_no || "").trim()).filter(Boolean)
