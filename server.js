@@ -6,7 +6,7 @@ const https = require("https");
 const app = express();
 app.use(cors());
 
-// 🔥 حل مشكلة SSL (مهم جداً)
+// 🔥 حل SSL
 const httpsAgent = new https.Agent({
   rejectUnauthorized: false
 });
@@ -18,94 +18,55 @@ app.get("/", (req, res) => {
 
 let TOKEN = null;
 
-async function getVisits(date) {
-  // 🔥 دايم نسوي login جديد
-  await login();
+// ===============================
+// 🔐 LOGIN (لازم تكون موجودة)
+// ===============================
+async function login() {
+  const res = await axios.post(
+    "https://kahhal.instahmsapi.com/instaapps/Customer/Login.do?_method=login",
+    new URLSearchParams({
+      username: "auto_update",
+      password: "auto_update",
+      hospital_name: "kahhal"
+    }),
+    {
+      httpsAgent
+    }
+  );
 
-  try {
-    const res = await axios.get(
-      "https://kahhal.instahmsapi.com/instaapps/Customer/Registration/GeneralRegistration.do",
-      {
-        httpsAgent,
-        headers: {
-          request_handler_key: TOKEN
-        },
-        params: {
-          _method: "getPatientVisits",
-          from_date: date,
-          to_date: date
-        }
-      }
-    );
+  TOKEN = res.data.request_handler_key;
 
-    const visits = res.data?.patient_visits_details || [];
-
-    console.log("📊 VISITS:", visits.length);
-
-    return visits;
-
-  } catch (err) {
-    console.error("❌ API ERROR FULL:", err.response?.data || err.message);
-    throw err;
-  }
+  console.log("✅ NEW TOKEN:", TOKEN);
 }
+
 // ===============================
 // 📊 GET VISITS
 // ===============================
 async function getVisits(date) {
-  if (!TOKEN) await login();
 
-  try {
-    const res = await axios.get(
-      "https://kahhal.instahmsapi.com/instaapps/Customer/Registration/GeneralRegistration.do",
-      {
-        httpsAgent,
-        headers: {
-          request_handler_key: TOKEN
-        },
-        params: {
-          _method: "getPatientVisits",
-          from_date: date,
-          to_date: date
-        }
+  // 🔥 أهم شيء: نسوي login كل مرة
+  await login();
+
+  const res = await axios.get(
+    "https://kahhal.instahmsapi.com/instaapps/Customer/Registration/GeneralRegistration.do",
+    {
+      httpsAgent,
+      headers: {
+        request_handler_key: TOKEN
+      },
+      params: {
+        _method: "getPatientVisits",
+        from_date: date,
+        to_date: date
       }
-    );
-
-    const visits = res.data?.patient_visits_details || [];
-
-    console.log("📊 VISITS:", visits.length);
-
-    return visits;
-
-  } catch (err) {
-
-    // 🔥 إذا التوكن انتهى
-    if (err.response?.status === 401 || err.response?.status === 403) {
-      console.log("🔁 TOKEN EXPIRED → RELOGIN");
-
-      await login();
-
-      const retry = await axios.get(
-        "https://kahhal.instahmsapi.com/instaapps/Customer/Registration/GeneralRegistration.do",
-        {
-          httpsAgent,
-          headers: {
-            request_handler_key: TOKEN
-          },
-          params: {
-            _method: "getPatientVisits",
-            from_date: date,
-            to_date: date
-          }
-        }
-      );
-
-      return retry.data?.patient_visits_details || [];
     }
+  );
 
-    console.error("❌ API ERROR:", err.message);
-    throw err;
-  }
+  const visits = res.data?.patient_visits_details || [];
+
+  console.log("📊 VISITS:", visits.length);
+
+  return visits;
 }
 
 // ===============================
