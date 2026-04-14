@@ -6,53 +6,48 @@ const https = require("https");
 const app = express();
 app.use(cors());
 
-// 🔥 حل SSL
 const httpsAgent = new https.Agent({
   rejectUnauthorized: false
 });
 
-// الصفحة الرئيسية
 app.get("/", (req, res) => {
   res.send("API is running");
 });
 
-let TOKEN = null;
-
-// ===============================
-// 🔐 LOGIN (لازم تكون موجودة)
-// ===============================
 async function login() {
+  const body = new URLSearchParams();
+  body.append("username", "auto_update");
+  body.append("password", "auto_update");
+  body.append("hospital_name", "kahhal");
+
   const res = await axios.post(
     "https://kahhal.instahmsapi.com/instaapps/Customer/Login.do?_method=login",
-    new URLSearchParams({
-      username: "auto_update",
-      password: "auto_update",
-      hospital_name: "kahhal"
-    }),
+    body.toString(),
     {
-      httpsAgent
+      httpsAgent,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      }
     }
   );
 
-  TOKEN = res.data.request_handler_key;
+  if (!res.data?.request_handler_key) {
+    throw new Error(`LOGIN FAILED: ${JSON.stringify(res.data)}`);
+  }
 
-  console.log("✅ NEW TOKEN:", TOKEN);
+  console.log("LOGIN RESPONSE:", res.data);
+  return res.data.request_handler_key;
 }
 
-// ===============================
-// 📊 GET VISITS
-// ===============================
 async function getVisits(date) {
-
-  // 🔥 أهم شيء: نسوي login كل مرة
-  await login();
+  const token = await login();
 
   const res = await axios.get(
     "https://kahhal.instahmsapi.com/instaapps/Customer/Registration/GeneralRegistration.do",
     {
       httpsAgent,
       headers: {
-        request_handler_key: TOKEN
+        request_handler_key: token
       },
       params: {
         _method: "getPatientVisits",
@@ -62,53 +57,49 @@ async function getVisits(date) {
     }
   );
 
-  const visits = res.data?.patient_visits_details || [];
+  const visits = Array.isArray(res.data?.patient_visits_details)
+    ? res.data.patient_visits_details
+    : [];
 
-  console.log("📊 VISITS:", visits.length);
-
+  console.log("VISITS:", visits.length);
   return visits;
 }
 
-// ===============================
-// 🚀 API
-// ===============================
 app.get("/api/dashboard", async (req, res) => {
   try {
     const date = req.query.date;
 
     if (!date) {
-      return res.json({ ok: false, error: "Missing date" });
+      return res.json({
+        ok: false,
+        error: "Missing date"
+      });
     }
 
     const visits = await getVisits(date);
 
-    res.json({
+    return res.json({
       ok: true,
       counts: {
         dammamOpRecords: visits.length,
         dammamIpRecords: 0,
         gFlor: 0
       },
-      doctorsTable: [],
+      doctorsTable: visits,
       ipDoctorsTable: [],
       date
     });
-
   } catch (err) {
-    console.error("❌ DASHBOARD ERROR:", err.message);
+    console.error("DASHBOARD ERROR:", err.response?.data || err.message);
 
-    res.json({
+    return res.status(500).json({
       ok: false,
-      error: err.message
+      error: err.response?.data || err.message
     });
   }
 });
 
-// ===============================
-// 🟢 START
-// ===============================
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
