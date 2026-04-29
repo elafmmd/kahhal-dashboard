@@ -89,7 +89,7 @@ async function loadDashboard() {
     const date = reportDateInput.value;
     debugBox.textContent = "Updating...";
 
-    const res = await fetch(`http://localhost:3000/api/dashboard?date=${date}`);
+    const res = await fetch(`/api/dashboard?date=${date}`);
     const result = await res.json();
 
     if (!res.ok || !result.ok) {
