@@ -60,6 +60,7 @@ const IP_DOCTORS = [
 ].map(normalizeDoctorName);
 
 const DAMMAM_DOCTORS = [
+  "Dr. 02 Abdulaziz  Al Rushood",
   "Dr. Mohammaed Al Najar",
   "Dr. Qusai Mohammed",
   "Dr. Waqar Mustafa",
@@ -142,6 +143,8 @@ const CONSULTANT_SCHEDULE = {
   [normalizeDoctorName("Dr. Khaled  Al Otaibi")]: [0, 2],
   [normalizeDoctorName("Dr. Uday Al Owaifer")]: [0],
   [normalizeDoctorName("Dr. Abdulrahman  Al Hadlag")]: [4],
+  [normalizeDoctorName("Dr. 02 Abdulaziz  Al Rushood")]: [4,6,2,3],
+
   [normalizeDoctorName("Dr. Sana Yassin")]: [1, 3]
 };
 
@@ -297,38 +300,90 @@ app.get("/api/dashboard", async (req, res) => {
       `&center_id=${CENTER_ID}` +
       `&org_id=${ORG_ID}`;
 
-    const billsUrl =
-      `${BASE_URL}/Bills.do?_method=getBills` +
-      `&from_date=${encodeURIComponent(date)}` +
-      `&to_date=${encodeURIComponent(date)}` +
-      `&center_id=${CENTER_ID}` +
-      `&filter_by_finalized_date=N` +
-      `&page=1`;
+    // ===============================
+// 🔥 BILLS (ALL PAGES + RANGE)
+// ===============================
+// ===============================
+// 🔥 VISITS (مهم جداً)
+// ===============================
+const visitsRes = await axios.get(visitsUrl, {
+  httpsAgent,
+  headers: { request_handler_key: requestKey },
+  timeout: 60000
+});
 
-    const [visitsRes, billsRes] = await Promise.all([
-      axios.get(visitsUrl, {
-        httpsAgent,
-        headers: { request_handler_key: requestKey },
-        timeout: 60000
-      }),
-      axios.get(billsUrl, {
-        httpsAgent,
-        headers: { request_handler_key: requestKey },
-        timeout: 60000
-      }).catch(() => ({ data: { bills: [] } }))
-    ]);
+const allVisits = Array.isArray(visitsRes.data?.patient_visits_details)
+  ? visitsRes.data.patient_visits_details
+  : [];
 
-    const allVisits = Array.isArray(visitsRes.data?.patient_visits_details)
-      ? visitsRes.data.patient_visits_details
-      : [];
+console.log("TOTAL VISITS:", allVisits.length);
+// 🔥 قبل يومين وبعد 3 أيام
+const baseDate = new Date(date);
 
-    const bills = Array.isArray(billsRes.data?.bills)
-      ? billsRes.data.bills
-      : [];
+const fromDateObj = new Date(baseDate);
+fromDateObj.setDate(baseDate.getDate() - 2);
+
+const toDateObj = new Date(baseDate);
+toDateObj.setDate(baseDate.getDate() + 3);
+
+const from_date = fromDateObj.toISOString().slice(0, 10);
+const to_date = toDateObj.toISOString().slice(0, 10);
+
+let page = 1;
+let allBills = [];
+
+while (true) {
+  const billsRes = await axios.post(
+    `${BASE_URL}/Bills.do`,
+    qs.stringify({
+      _method: "getBills",
+      from_date,
+      to_date,
+      center_id: CENTER_ID,
+      page,
+      rows: 100,
+      filter_by_finalized_date: "N"
+    }),
+    {
+      httpsAgent,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        request_handler_key: requestKey
+      },
+      timeout: 60000
+    }
+  );
+
+  const bills = billsRes.data?.bills || [];
+
+  console.log(`PAGE ${page}:`, bills.length);
+
+  if (!bills.length) break;
+
+  allBills.push(...bills);
+
+  if (bills.length < 100) break;
+
+  page++;
+}
+
+console.log("TOTAL BILLS:", allBills.length);
 
     // فلترة اليوم بالكود
     const visits = allVisits.filter(v => visitDateKey(v) === date);
+// 🔥 MAP: visit_id → doctor
+const visitDoctorMap = {};
 
+visits.forEach(v => {
+  const vid = String(v.VISIT_ID || v.MAIN_VISIT_ID || "").trim();
+  if (!vid) return;
+
+  visitDoctorMap[vid] =
+    v.DOCTOR_NAME ||
+    v.DOCTOR_FULL_NAME ||
+    v.DOCTOR ||
+    "";
+});
     const opVisits = visits.filter(v =>
       String(v.VISIT_ID || v.MAIN_VISIT_ID || "").toUpperCase().startsWith("OP")
     );
@@ -343,34 +398,201 @@ app.get("/api/dashboard", async (req, res) => {
     });
 
     const dammamIpVisits = ipVisits.filter(v => {
-      const normalized = normalizeDoctorName(v.DOCTOR_NAME || v.DOCTOR_FULL_NAME || "");
-      return IP_DOCTORS.some(doc => normalized.includes(doc));
-    });
+  const normalized = normalizeDoctorName(v.DOCTOR_NAME || v.DOCTOR_FULL_NAME || "");
 
-    const opPatients = uniquePatientCount(dammamOpVisits);
-    const ipPatients = uniquePatientCount(dammamIpVisits);
+  return (
+    v.CENTER_NAME === "Kahhal_Dammam" &&   // 🔥 هذا أهم شيء
+    IP_DOCTORS.some(doc => normalized.includes(doc))
+  );
+});
+const visitIds = new Set(
+  visits
+    .map(v => String(v.VISIT_ID || v.MAIN_VISIT_ID || "").trim())
+    .filter(Boolean)
+);
+const opVisitWithConsultation = new Set();
 
-    const lasikPatients = new Set();
+allBills.forEach((bill) => {
+  if (!bill) return;
 
-    bills.forEach((bill) => {
-      const charges = Array.isArray(bill.charges) ? bill.charges : [];
+  const status = String(bill.bill_status || "").toUpperCase();
+  if (!["CLOSED", "FINALIZED"].includes(status)) return;
 
-      charges.forEach((c) => {
-        const desc = String(c.description || "")
-          .toUpperCase()
-          .replace(/\s+/g, " ")
-          .trim();
+  if (bill.center_name !== "Kahhal_Dammam") return;
 
-        if (
-          desc.includes("REFRECTIVE SURGERY WORKUP") ||
-          desc.includes("REFRACTIVE SURGERY WORKUP")
-        ) {
-          const mr = String(bill.mr_no || "").trim();
-          if (mr) lasikPatients.add(mr);
-        }
-      });
-    });
+  // رقم الزيارة من الفاتورة
+  const billVisitId = String(bill.visit_id || "").trim();
 
+  // لازم رقم زيارة الفاتورة يكون موجود في زيارات اليوم
+  if (!visitIds.has(billVisitId)) return;
+
+  // لازم نفس الفاتورة فيها OP Consultation
+  const hasOpConsultation = (bill.charges || []).some((c) => {
+    const chargeHead = String(c.charge_head || "").trim().toUpperCase();
+    return chargeHead === "OP CONSULTATION";
+  });
+
+  if (!hasOpConsultation) return;
+
+  // إذا تطابق visit_id + فيها OP Consultation تنحسب
+  opVisitWithConsultation.add(billVisitId);
+});
+
+const opPatients = opVisitWithConsultation.size;
+  const ipPatients = uniquePatientCount(dammamIpVisits);
+
+    // ===============================
+// 🔥 LASIK FINAL (Doctor Based)
+// ===============================
+// ===============================
+// 🔥 INJECTION (INJ)
+// ===============================
+
+const injVisits = new Set();
+const injDoctorMap = {};
+
+allBills.forEach((bill) => {
+  if (!bill) return;
+  if (bill.bill_status === "CANCELLED") return;
+  if (bill.center_name !== "Kahhal_Dammam") return;
+
+  const billVisitId = String(bill.visit_id || "").trim();
+
+  // لازم يكون نفس يوم الزيارة
+  if (!visitIds.has(billVisitId)) return;
+
+  let isInj = false;
+  let doctorName = "";
+
+  (bill.charges || []).forEach((c) => {
+    const desc = String(c.description || "").toUpperCase();
+
+    const isInjection =
+      desc.includes("EYLEA") ||
+      desc.includes("LUCENTIS") ||
+      desc.includes("OZURDEX") ||
+      desc.includes("VABYSMO") ||
+      desc.includes("INTRAVITREAL") ||
+      desc.includes("INTRAVETRIAL");
+
+    if (isInjection) {
+      isInj = true;
+
+      if (!doctorName) {
+        doctorName =
+          c.conducting_doctor ||
+          c.doctor ||
+          bill.doctor_name ||
+          "";
+      }
+    }
+  });
+
+  if (!isInj || !billVisitId) return;
+
+  // 🔥 منع التكرار (يمين + يسار)
+  if (injVisits.has(billVisitId)) return;
+
+  injVisits.add(billVisitId);
+
+  // 🔥 نجيب الدكتور من الزيارة (الأدق)
+  const visitDoctor = visitDoctorMap[billVisitId] || doctorName || "UNKNOWN";
+  const key = normalizeDoctorName(visitDoctor);
+
+  if (!injDoctorMap[key]) {
+    injDoctorMap[key] = {
+      name: cleanDisplayName(visitDoctor),
+      total: 0,
+      lastTime: null
+    };
+  }
+
+  injDoctorMap[key].total += 1;
+});
+
+// 🔥 جدول INJ
+const injTable = Object.values(injDoctorMap)
+  .sort((a, b) => b.total - a.total);
+
+
+const lasikVisits = new Set();
+const lasikDoctorMap = {};
+
+allBills.forEach((bill) => {
+  if (!bill) return;
+  if (bill.bill_status === "CANCELLED") return;
+  if (bill.center_name !== "Kahhal_Dammam") return;
+
+  const billVisitId = String(bill.visit_id || "").trim();
+
+  // لازم يكون عنده زيارة اليوم
+  if (!visitIds.has(billVisitId)) return;
+
+  let isLasikBill = false;
+  let doctorName = "";
+
+  (bill.charges || []).forEach((c) => {
+    const desc = String(c.description || "").toUpperCase();
+
+    const isLasik =
+      desc.includes("LASIK") ||
+      desc.includes("FEMTO") ||
+      desc.includes("EXCIMER") ||
+      desc.includes("SMILE") ||
+      desc.includes("PRK") ||
+      desc.includes("PTK") ||
+      desc.includes("CROSS") ||
+      desc.includes("REFRACT") ||
+      desc.includes("ALK");
+
+    const exclude =
+      desc.includes("WORK UP") ||
+      desc.includes("CONSULT") ||
+      desc.includes("CHECK") ||
+      desc.includes("OCT") ||
+      desc.includes("TEST");
+
+    if (isLasik && !exclude) {
+      isLasikBill = true;
+
+      if (!doctorName) {
+  doctorName =
+    c.conducting_doctor ||
+    c.doctor ||
+    bill.doctor_name ||
+    bill.DOCTOR_NAME ||
+    bill.DOCTOR ||
+    "";
+}
+    }
+  });
+
+  if (!isLasikBill || !billVisitId) return;
+
+  // 🔥 منع التكرار (يمين + يسار)
+  if (lasikVisits.has(billVisitId)) return;
+
+  lasikVisits.add(billVisitId);
+
+  // 🔥 خذ الدكتور من VISITS (الأهم)
+const visitDoctor = visitDoctorMap[billVisitId] || doctorName || "UNKNOWN";
+
+const key = normalizeDoctorName(visitDoctor);
+
+if (!lasikDoctorMap[key]) {
+  lasikDoctorMap[key] = {
+    name: cleanDisplayName(visitDoctor),
+    total: 0,
+    lastTime: null
+  };
+}
+
+  lasikDoctorMap[key].total += 1;
+});
+
+// 🔥 الجدول النهائي
+const lasikTable = Object.values(lasikDoctorMap)
+  .sort((a, b) => b.total - a.total);
     const doctorsTable = buildDoctorStats(dammamOpVisits, [...DAMMAM_DOCTORS, ...TABLE_ONLY_DOCTORS], true);
     const ipDoctorsTable = buildDoctorStats(dammamIpVisits, IP_DOCTORS, false);
 
@@ -387,7 +609,9 @@ app.get("/api/dashboard", async (req, res) => {
         appointments: 0,
         opPatients,
         ipPatients,
-        lasikWorkup: lasikPatients.size,
+        lasikWorkup: lasikVisits.size,
+lasikCount: lasikVisits.size,
+injCount: injVisits.size,
         gFlor: gFlorCount,
 
         // للموقع الحالي
@@ -402,7 +626,9 @@ app.get("/api/dashboard", async (req, res) => {
         optometry: countByList(activeDoctors, OPTOMETRY)
       },
       doctorsTable,
-      ipDoctorsTable
+ipDoctorsTable,
+lasikTable,
+injTable
     });
 
   } catch (err) {

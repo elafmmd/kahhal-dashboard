@@ -5,11 +5,15 @@ const gFlorCountEl = document.getElementById("gFlorCount");
 const opCountEl = document.getElementById("opCount");
 const ipCountEl = document.getElementById("ipCount");
 const debugBox = document.getElementById("debugBox");
-
+const lasikCountEl = document.getElementById("lasikCount");
+const injCountEl = document.getElementById("injCount");
+const lastHeader = document.getElementById("lastPatientHeader");
 let currentMode = "OP";
 
 const btnOP = document.getElementById("btnOP");
 const btnIP = document.getElementById("btnIP");
+const btnLASIK = document.getElementById("btnLASIK");
+const btnINJ = document.getElementById("btnINJ");
 btnOP.classList.add("active");
 
 function normalizeName(name) {
@@ -85,7 +89,7 @@ async function loadDashboard() {
     const date = reportDateInput.value;
     debugBox.textContent = "Updating...";
 
-    const res = await fetch(`https://kahhal-dashboard.onrender.com/api/dashboard?date=${date}`);
+    const res = await fetch(`http://localhost:3000/api/dashboard?date=${date}`);
     const result = await res.json();
 
     if (!res.ok || !result.ok) {
@@ -99,7 +103,8 @@ async function loadDashboard() {
     opCountEl.textContent = result.counts?.dammamOpRecords ?? 0;
 ipCountEl.textContent = result.counts?.dammamIpRecords ?? 0;
     gFlorCountEl.textContent = result.counts?.gFlor ?? 0;
-
+lasikCountEl.textContent = result.counts?.lasikCount ?? result.counts?.lasikWorkup ?? 0;
+injCountEl.textContent = result.counts?.injCount ?? 0;
     const doctorCountsEl = document.getElementById("doctorCounts");
     if (doctorCountsEl) {
       doctorCountsEl.innerHTML = `
@@ -111,25 +116,42 @@ ipCountEl.textContent = result.counts?.dammamIpRecords ?? 0;
 
     const tbody = document.querySelector("#doctorTable tbody");
     tbody.innerHTML = "";
-
+// 🔥 إخفاء عمود Last Patient في LASIK و INJ
+if (currentMode === "LASIK" || currentMode === "INJ") {
+  lastHeader.style.display = "none";
+} else {
+  lastHeader.style.display = "";
+}
     let rows = [];
 
     if (currentMode === "OP") {
-      rows = opRows;
-    } else {
-      rows = ipRows.filter(d => {
-        const n = normalizeName(d.name);
-        return IP_DOCTORS.some(doc => n.includes(doc));
-      });
-    }
+  rows = opRows;
+} else if (currentMode === "IP") {
+  rows = ipRows.filter(d => {
+    const n = normalizeName(d.name);
+    return IP_DOCTORS.some(doc => n.includes(doc));
+  });
+} else if (currentMode === "LASIK") {
+  rows = Array.isArray(result.lasikTable) ? result.lasikTable : [];
+}
+else if (currentMode === "INJ") {
+  rows = Array.isArray(result.injTable) ? result.injTable : [];
+}
 
     rows.forEach((d) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${d.name ?? "-"}</td>
-        <td>${d.total ?? 0}</td>
-        <td>${d.lastTime ? new Date(d.lastTime).toLocaleTimeString() : "-"}</td>
-      `;
+      if (currentMode === "LASIK" || currentMode === "INJ") {
+  tr.innerHTML = `
+    <td>${d.name ?? "-"}</td>
+    <td>${d.total ?? 0}</td>
+  `;
+} else {
+  tr.innerHTML = `
+    <td>${d.name ?? "-"}</td>
+    <td>${d.total ?? 0}</td>
+    <td>${d.lastTime ? new Date(d.lastTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : "-"}</td>
+  `;
+}
       tbody.appendChild(tr);
     });
 
@@ -144,20 +166,40 @@ ipCountEl.textContent = result.counts?.dammamIpRecords ?? 0;
   }
 }
 
+function resetButtons() {
+  btnOP.classList.remove("active");
+  btnIP.classList.remove("active");
+  btnLASIK.classList.remove("active");
+  btnINJ.classList.remove("active");
+}
+
 btnOP.addEventListener("click", () => {
   currentMode = "OP";
+  resetButtons();
   btnOP.classList.add("active");
-  btnIP.classList.remove("active");
   loadDashboard();
 });
 
 btnIP.addEventListener("click", () => {
   currentMode = "IP";
+  resetButtons();
   btnIP.classList.add("active");
-  btnOP.classList.remove("active");
   loadDashboard();
 });
 
+btnLASIK.addEventListener("click", () => {
+  currentMode = "LASIK";
+  resetButtons();
+  btnLASIK.classList.add("active");
+  loadDashboard();
+});
+
+btnINJ.addEventListener("click", () => {
+  currentMode = "INJ";
+  resetButtons();
+  btnINJ.classList.add("active");
+  loadDashboard();
+});
 reportDateInput.addEventListener("change", loadDashboard);
 
 setDefaultDate();

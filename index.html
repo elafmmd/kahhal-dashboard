@@ -30,11 +30,18 @@
     <h3>IP Patients</h3>
     <p id="ipCount">0</p>
   </div>
-
-  <div class="card">
+<div class="card">
     <h3>Ophthalmology</h3>
     <p id="gFlorCount">0</p>
   </div>
+<div class="card">
+  <h3>LASIK</h3>
+  <p id="lasikCount">0</p>
+</div>
+  <div class="card">
+  <h3>INJ</h3>
+  <p id="injCount">0</p>
+</div>
 </section>
 
     <section class="table-section">
@@ -48,7 +55,9 @@
 
   <div class="toggle-buttons">
     <button id="btnOP" class="toggle-btn active">OP</button>
-    <button id="btnIP" class="toggle-btn">IP</button>
+<button id="btnIP" class="toggle-btn">IP</button>
+<button id="btnLASIK" class="toggle-btn">LASIK</button>
+<button id="btnINJ" class="toggle-btn">INJ</button>
   </div>
 </div>
 <div class="doctor-table-wrap">
@@ -57,7 +66,7 @@
       <tr>
         <th>Doctor</th>
         <th>Patients Count</th>
-        <th>Last Patient</th>
+        <th id="lastPatientHeader">Last Patient</th>
       </tr>
     </thead>
     <tbody></tbody>
